@@ -101,6 +101,13 @@ h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:.0
 .review .nota small{font-family:var(--body);font-size:12.5px;color:var(--accent);font-weight:700;margin-left:6px}
 .review p{margin:2px 0 0;font-size:14px;color:var(--fg)}
 .review .x{border:0;background:transparent;color:var(--muted);font-size:12.5px;padding:4px 0;text-decoration:underline}
+.opt-toggle{border:0;background:transparent;color:var(--accent);font-size:13px;font-weight:700;padding:0;margin:-4px 0 10px;letter-spacing:.02em}
+.opts{margin:-2px 0 12px;padding:10px;border:1px solid var(--line);background:#0B0F14;display:grid;gap:10px}
+.opts .gname{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chips button{border:1px solid var(--line);background:#1E2328;color:var(--fg);padding:6px 9px;font-size:13px;line-height:1.2;text-align:left}
+.chips button[aria-pressed="true"]{border-color:var(--accent);color:var(--on-accent);background:var(--accent-soft)}
+.opts .reset{border:0;background:transparent;color:var(--muted);font-size:12.5px;text-decoration:underline;padding:0;justify-self:start}
 .how{font-size:12.5px;color:var(--muted);margin:-2px 0 14px;letter-spacing:.02em}
 
 /* água */
@@ -292,7 +299,31 @@ const MEALS = [
   {id:"lanche", hora:"16h", nome:"Lanche", txt:w=>w.lanche},
   {id:"jantar", hora:"22h", nome:"Jantar", txt:w=>w.prato+", com salada e legumes à vontade"},
 ];
-const menuText = (m,w) => S.profile?.showMenu===false ? "Siga o seu plano alimentar" : m.txt(w);
+// Opções e substituições do plano da nutricionista (mesmas quantidades do plano)
+const CARB_PRATO = ["Arroz branco 100 g (4 col. sopa)","Batata inglesa cozida 250 g","Batata inglesa assada 145 g","Batata doce cozida 141 g","Batata doce assada 89 g","Mandioca cozida 107 g","Mandioquinha 123 g","Macarrão cozido 100 g"];
+const PROT_PRATO = ["Frango desfiado 120 g","Filé de frango grelhado 100 g","Sobrecoxa assada 73,5 g","Carne grelhada ou assada 89 g","Carne refogada 96 g","Filé de peixe 115 g","Peito de frango cozido 120 g","Peito de frango grelhado 122 g","Carne moída refogada 63 g","3 ovos"];
+const OPTS = {
+  cafe:   {groups:[["Base", ["Pão integral 2 fatias (50 g)","Tapioca 45 g","Magic Toast 7 un.","Bolacha de arroz 7 un."]], ["Proteína", ["2 ovos","Frango desfiado 100 g","Atum 80 g","Whey 30 g"]]], extra:"requeijão light 30 g", alts:["Crepioca (opção 2 do plano)"]},
+  almoco: {groups:[["Carboidrato", CARB_PRATO], ["Proteína", PROT_PRATO]], extra:"salada e legumes à vontade", alts:[]},
+  lanche: {groups:[], alts:["7 Magic Toast + frango desfiado 80 g + requeijão light 30 g","Whey 30 g + 100 ml de leite desnatado + banana"]},
+  jantar: {groups:[["Carboidrato", CARB_PRATO], ["Proteína", PROT_PRATO]], extra:"salada e legumes à vontade", alts:[]},
+};
+// escolha padrão de cada semana do rodízio: [café, prato, lanche]
+const WEEK_PICKS = [
+  {cafe:{g:[0,0]}, prato:{g:[0,0]}, lanche:{a:0}},
+  {cafe:{g:[1,0]}, prato:{g:[3,3]}, lanche:{a:1}},
+  {cafe:{g:[3,2]}, prato:{g:[7,8]}, lanche:{a:0}},
+  {cafe:{g:[2,0]}, prato:{g:[5,5]}, lanche:{a:1}},
+];
+const weekPick = (d, id) => { const w = WEEK_PICKS[weekOf(d)]; return id==="almoco"||id==="jantar" ? w.prato : w[id]; };
+const pickOf = (d, id) => S.days[d]?.pick?.[id] || weekPick(d, id);
+function pickText(id, pk){
+  const o = OPTS[id];
+  if (pk.a!=null) return o.alts[pk.a];
+  return o.groups.map((g,i)=>g[1][pk.g[i]]).join(" + ") + (o.extra ? ` + ${o.extra}` : "");
+}
+const mealText = (d, m) => S.profile?.showMenu===false ? "Siga o seu plano alimentar" : pickText(m.id, pickOf(d, m.id));
+const menuText = (m,w) => mealText(S.day, m);
 // Pontos de cada hábito
 const P = {mealOn:20, mealOff:-20, perfect:30, photoMax:15, per100ml:1, waterGoal:15, fastGoal:30, fastHour:2, weigh:10};
 const HABITS = [
@@ -374,7 +405,7 @@ function pickPhoto(d, mealId, w){
     try {
       const [big, thumb] = await Promise.all([shrink(f,1024,.82), shrink(f,160,.6)]);
       const prompt = `Você é o avaliador de um jogo de emagrecimento. A pessoa segue um plano de nutricionista e mandou a foto da refeição "${meal.nome}".
-Refeição prevista no plano para esta semana: ${S.profile.showMenu===false?"não informada; avalie se parece uma refeição equilibrada de dieta":meal.txt(w)}.
+Refeição prevista no plano para esta semana: ${S.profile.showMenu===false?"não informada; avalie se parece uma refeição equilibrada de dieta":mealText(d, meal)}.
 Regras do plano: metade do prato com salada e legumes; carboidrato e proteína nas quantidades indicadas; nada frito, doce ou refrigerante fora do plano. As gramas são do alimento pronto.
 Avalie a foto e responda SÓ com JSON: {"nota": inteiro 0 a 10 (10 = exatamente o plano, 7-9 = no plano com pequenas diferenças, 4-6 = parecido mas com porção ou item fora, 0-3 = fora do plano), "no_plano": true ou false, "porcao": "certa" | "pouca" | "muita", "vistos": [até 5 alimentos que você vê], "comentario": "uma ou duas frases em português do Brasil, tom de treinador animado e gentil, dizendo o que ficou bom e uma dica"}.
 Se a foto não for de comida, dê nota 0 e diga isso no comentário.`;
@@ -663,18 +694,33 @@ function todayView(s){
   const meals = frag.getElementById("meals");
   for (const m of MEALS){
     const st = v.meals?.[m.id];
-    const row = $(`<div class="meal"><time>${m.hora}</time><div class="content"><h3>${m.nome}</h3><p>${esc(menuText(m,w))}</p>
+    const row = $(`<div class="meal"><time>${m.hora}</time><div class="content"><h3>${m.nome}</h3><p>${esc(mealText(d,m))}${v.pick?.[m.id]?` <span class="pts-pill">· trocado</span>`:""}</p>
+      ${S.profile.showMenu===false?"":`<button class="opt-toggle" data-opt="${m.id}" aria-expanded="${S.openOpt===d+m.id}">${S.openOpt===d+m.id?"Fechar opções ▴":"Trocar opção ▾"}</button><div data-opts></div>`}
       <div class="seg"><button data-m="${m.id}" data-v="on" class="${st==="on"?"on-good":""}" aria-pressed="${st==="on"}">✓ No plano · +${P.mealOn}</button>
       <button data-m="${m.id}" data-v="off" class="${st==="off"?"on-off":""}" aria-pressed="${st==="off"}">Fugi · −${-P.mealOff}</button>
       <button data-m="${m.id}" data-v="skip" class="${st==="skip"?"on-skip":""}" aria-pressed="${st==="skip"}">Pulei · 0</button>
       ${st==="free"||TS.avail>0?`<button data-m="${m.id}" data-v="free" class="${st==="free"?"on-free":""}" aria-pressed="${st==="free"}">${treat().em} Livre</button>`:""}
       ${S.photoOk?`<button class="photo-btn" data-photo="${m.id}" ${S.busy[d+m.id]?"disabled":""}>${S.busy[d+m.id]?"Analisando a foto…":v.photos?.[m.id]?"📷 Nova foto":"📷 Foto · até +15"}</button>`:""}</div>
       <div data-review></div></div></div>`);
+    if (S.openOpt===d+m.id){
+      const o = OPTS[m.id], pk = pickOf(d, m.id), box = document.createElement("div"); box.className="opts";
+      o.groups.forEach((g,gi)=>{ const sec=$(`<div><span class="gname">${g[0]}</span><div class="chips"></div></div>`).firstElementChild;
+        g[1].forEach((it,ii)=>{ const b=document.createElement("button"); b.textContent=it; const sel=pk.g&&pk.g[gi]===ii; b.setAttribute("aria-pressed", !!sel);
+          b.onclick=()=>{ const cur=pickOf(d,m.id); const gsel = cur.g ? [...cur.g] : (weekPick(d,m.id).g ? [...weekPick(d,m.id).g] : o.groups.map(()=>0)); gsel[gi]=ii; setPick(d,m.id,{g:gsel}); };
+          sec.querySelector(".chips").append(b); });
+        box.append(sec); });
+      if (o.alts.length){ const sec=$(`<div><span class="gname">${o.groups.length?"Ou":"Opções"}</span><div class="chips"></div></div>`).firstElementChild;
+        o.alts.forEach((it,ii)=>{ const b=document.createElement("button"); b.textContent=it; b.setAttribute("aria-pressed", pk.a===ii); b.onclick=()=>setPick(d,m.id,{a:ii}); sec.querySelector(".chips").append(b); });
+        box.append(sec); }
+      if (v.pick?.[m.id]){ const r=document.createElement("button"); r.className="reset"; r.textContent="Voltar ao cardápio da semana"; r.onclick=()=>setPick(d,m.id,null); box.append(r); }
+      row.querySelector("[data-opts]").append(box);
+    }
     const ph = v.photos?.[m.id];
     if (ph){ const r = $(`<div class="review"><img alt="Foto do ${m.nome.toLowerCase()}"><div><div class="nota num">${ph.nota}/10<small>+${photoPts(ph)} pts · porção ${esc(ph.porcao||"?")}</small></div><p></p><button class="x" data-unphoto="${m.id}">Remover avaliação</button></div></div>`);
       r.querySelector("img").src = ph.thumb||""; r.querySelector("p").textContent = ph.comentario||""; row.querySelector("[data-review]").append(r); }
     meals.append(row);
   }
+  meals.querySelectorAll("[data-opt]").forEach(b=>b.onclick=()=>{ S.openOpt = S.openOpt===d+b.dataset.opt ? null : d+b.dataset.opt; render(); });
   meals.querySelectorAll("[data-photo]").forEach(b=>b.onclick=()=>pickPhoto(d, b.dataset.photo, w));
   meals.querySelectorAll("[data-unphoto]").forEach(b=>b.onclick=()=>act(()=>{ const dd=dayData(d); delete dd.photos[b.dataset.unphoto]; saveDay(d); }));
   meals.querySelectorAll("button[data-v]").forEach(b=>b.onclick=()=>act(()=>{
@@ -696,6 +742,12 @@ function todayView(s){
   return frag;
 }
 
+function setPick(d, id, pk){
+  const dd = dayData(d); dd.pick ||= {};
+  const def = JSON.stringify(weekPick(d,id));
+  if (!pk || JSON.stringify(pk)===def) delete dd.pick[id]; else dd.pick[id] = pk;
+  saveDay(d); render();
+}
 function fastCard(d, v, p){
   const running = p.fastStart && d===today();
   const hrs = running ? (Date.now()-p.fastStart)/36e5 : (v.fast||0);
