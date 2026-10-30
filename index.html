@@ -106,7 +106,8 @@ h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:.0
 .pips .now{color:var(--gold-bright)}
 .treat.ready{border-color:var(--gold-bright);box-shadow:0 0 22px rgba(200,170,110,.25),inset 0 0 0 1px rgba(0,0,0,.6)}
 .choice{display:flex;gap:8px}
-#wev button{flex:1 1 auto;white-space:nowrap;padding:10px 8px}
+#wev{display:grid;grid-template-columns:repeat(5,1fr)}
+#wev button{white-space:nowrap;padding:10px 4px}
 .choice button{flex:1;border:1px solid var(--line-bright);background:#1E2328;color:var(--muted);padding:10px;font-weight:700;letter-spacing:.04em}
 .choice button[aria-pressed="true"]{border-color:var(--accent);color:var(--on-accent);background:linear-gradient(180deg,#0A3C46,#05202A)}
 .bonus.locked{background:transparent;border-color:var(--line);color:var(--dim)}
@@ -1095,7 +1096,7 @@ function setupView(editing){
         <div class="field"><label for="wg">Meta de água (litros)</label><input type="number" id="wg" inputmode="decimal" min="1" max="6" step="0.25" value="${p.waterL ?? ((p.waterGoal||8)*0.25)}"></div>
         <div class="field"><label for="fg">Meta de jejum (horas)</label><input type="number" id="fg" min="8" max="20" value="${p.fastGoal}"></div>
       </div>
-      <div class="field" style="margin-top:12px"><label>Lembrete de água (das 8h às 22h)</label><div class="choice" id="wev" style="flex-wrap:wrap">${[[0,"Desligado"],[30,"30 min"],[60,"1 h"],[90,"1h30"],[120,"2 h"]].map(([v,t])=>`<button type="button" data-v="${v}" aria-pressed="${(p.waterEvery??60)===v}">${t}</button>`).join("")}</div></div>
+      <div class="field" style="margin-top:12px"><label>Lembrete de água (das 8h às 22h)</label><div class="choice" id="wev">${[[0,"Não"],[30,"30 min"],[60,"1 h"],[90,"1h30"],[120,"2 h"]].map(([v,t])=>`<button type="button" data-v="${v}" aria-pressed="${(p.waterEvery??60)===v}">${t}</button>`).join("")}</div></div>
       ${window.Notification && Notification.permission!=="granted"?`<button class="btn ghost block" type="button" id="wnot" style="margin-top:8px">Avisar também com notificação do celular</button>`:""}
       <p class="note" style="margin-top:8px">Pelo seu plano, do jantar das 22h ao café das 9h são 11 horas.</p>
       <button class="toggle" type="button" role="switch" id="smenu" aria-checked="${p.showMenu!==false}" style="margin-top:10px"><span><b>Mostrar o cardápio da nutricionista</b><br><span class="note">Desligue se você segue outro plano.</span></span><span class="sw"></span></button>
