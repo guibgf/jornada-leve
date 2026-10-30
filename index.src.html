@@ -92,6 +92,7 @@ h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:.0
 .pips .now{color:var(--gold-bright)}
 .treat.ready{border-color:var(--gold-bright);box-shadow:0 0 22px rgba(200,170,110,.25),inset 0 0 0 1px rgba(0,0,0,.6)}
 .choice{display:flex;gap:8px}
+#wev button{flex:1 1 auto;white-space:nowrap;padding:10px 8px}
 .choice button{flex:1;border:1px solid var(--line-bright);background:#1E2328;color:var(--muted);padding:10px;font-weight:700;letter-spacing:.04em}
 .choice button[aria-pressed="true"]{border-color:var(--accent);color:var(--on-accent);background:linear-gradient(180deg,#0A3C46,#05202A)}
 .bonus.locked{background:transparent;border-color:var(--line);color:var(--dim)}
@@ -264,6 +265,9 @@ button.badge[aria-pressed="true"]{border-color:var(--gold);background:var(--gold
 @keyframes pop{from{transform:translateY(-8px) scale(.96);opacity:0}}
 @keyframes rise{from{transform:scale(.6);opacity:0;filter:brightness(2)}}
 .modal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,rgba(10,50,60,.7),rgba(1,10,19,.92));padding:24px}
+.phrase{margin:0;padding:12px 14px;border-left:3px solid var(--gold);background:linear-gradient(90deg,rgba(200,170,110,.12),transparent);font-style:italic;font-size:14.5px;color:#F0E6D2}
+.modal .wbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.modal .later{border:0;background:transparent;color:var(--muted);text-decoration:underline;margin-top:10px;font-size:13px}
 .modal .card{max-width:340px;text-align:center;animation:pop .3s ease-out}
 .modal .big{font-size:56px;line-height:1;display:grid;place-items:center;animation:rise .6s ease-out}
 .modal .big svg{width:120px;height:132px}
@@ -700,6 +704,7 @@ function todayView(s){
       <div><b>${pts}</b><span>pontos do dia</span></div>
       <div><b>${nOn}/4</b><span>refeições no plano</span></div>
     </div>
+    ${isToday?`<p class="phrase">${esc(phraseOf(d))}</p>`:""}
     ${treatCard()}
     <section class="card">
       <div class="card-head"><h2>Refeições</h2><span class="eyebrow">${isTue(d)?"Terça coringa · sem carne vermelha":w.nome}</span></div>
@@ -749,7 +754,7 @@ function todayView(s){
   meals.querySelectorAll("button[data-v]").forEach(b=>b.onclick=()=>act(()=>{
     const dd = dayData(d); dd.meals ||= {}; dd.meals[b.dataset.m] = dd.meals[b.dataset.m]===b.dataset.v ? null : b.dataset.v; saveDay(d);
   }));
-  if (on("agua")) frag.querySelectorAll("[data-ml]").forEach(b=>b.onclick=()=>act(()=>{ const dd=dayData(d); dd.waterMl=Math.max(0, waterMl(dd)+(+b.dataset.ml)); delete dd.water; saveDay(d,600); }));
+  if (on("agua")) frag.querySelectorAll("[data-ml]").forEach(b=>b.onclick=()=>act(()=>{ const dd=dayData(d); dd.waterMl=Math.max(0, waterMl(dd)+(+b.dataset.ml)); delete dd.water; if (+b.dataset.ml>0) markDrank(); saveDay(d,600); }));
   if (on("jejum")) wireFast(frag, d);
   const hb = frag.getElementById("habits");
   const checks = HABITS.filter(h=>h.check && on(h.id));
@@ -801,6 +806,56 @@ function wireFast(frag, d){
 setInterval(()=>{ if (S.profile?.fastStart && S.tab==="hoje" && S.day===today()){ const el=document.getElementById("ftime"); if(!el) return;
   const hrs=(Date.now()-S.profile.fastStart)/36e5, h=Math.floor(hrs), m=Math.floor((hrs-h)*60); el.textContent=`${h}h${String(m).padStart(2,"0")}`;
   const C=2*Math.PI*40; document.getElementById("fring").setAttribute("stroke-dashoffset", C*(1-Math.min(1,hrs/S.profile.fastGoal))); }}, 30000);
+
+// ---------- frases e lembrete de água ----------
+const PHRASES = [
+  "Cada refeição no plano é um passo a menos até a meta.","Disciplina é lembrar o que você quer de verdade.","Você não precisa ser perfeito, precisa ser constante.",
+  "O corpo que você quer está sendo construído hoje.","Pequenas escolhas, todos os dias, viram grandes resultados.","Não é dieta, é a sua nova rotina.",
+  "Quem chega longe é quem não desiste no meio.","Um dia ruim não apaga uma semana boa. Volte na próxima refeição.","Mais de 40 kg se vencem um quilo de cada vez.",
+  "A vontade passa. O orgulho de ter resistido fica.","Água, comida certa e paciência: o resto é consequência.","Você já começou. Isso é o mais difícil.",
+  "Foco no processo, o resultado vem.","Hoje é dia de ganhar pontos e perder quilos.","Seu futuro eu vai agradecer pela marmita de hoje.",
+  "Não troque o que você mais quer pelo que você quer agora.","Cansou? Descanse, mas não desista.","Progresso, não perfeição.",
+  "Cada copo de água conta. Cada treino conta. Você conta.","A pizza da semana está te esperando. Siga firme!","Constância vence motivação.",
+  "Você é mais forte que qualquer vontade de besteira.","Faça hoje o que te aproxima da meta.","Um elo de cada vez até o Desafiante.",
+  "O espelho demora, a balança oscila, mas o hábito fica.","Lembre por que você começou.","Ninguém faz por você, e é isso que torna a vitória sua.",
+  "Hoje melhor que ontem, amanhã melhor que hoje.","Bateu a fome? Bebe água e espera 10 minutos.","Grandes jornadas são feitas de dias comuns bem vividos."];
+const phraseOf = d => { const n = Math.floor(new Date(d+"T12:00:00")/864e5); return PHRASES[((n%PHRASES.length)+PHRASES.length)%PHRASES.length]; };
+const randPhrase = () => PHRASES[Math.floor(Math.random()*PHRASES.length)];
+const lsGet = k => { try { return localStorage.getItem(k); } catch(e){ return null; } };
+const lsSet = (k,v) => { try { localStorage.setItem(k,v); } catch(e){} };
+const WATER_FROM = 8, WATER_TO = 22;
+const waterEvery = () => S.profile?.waterEvery ?? 60;
+const waterExpected = () => { const h = new Date().getHours()+new Date().getMinutes()/60; return Math.round(goalMl()*Math.min(1,Math.max(0,(h-WATER_FROM)/(WATER_TO-WATER_FROM)))/50)*50; };
+const markDrank = () => lsSet("jl-lastwater", String(Date.now()));
+function waterPopup(){
+  const m = document.getElementById("modal"); if (m.innerHTML) return;
+  const v = S.days[today()]||{}, have = waterMl(v), exp = waterExpected();
+  m.innerHTML = `<div class="modal"><div class="card"><div class="big">💧</div><h2>Hora da água</h2>
+    <p>Você está com ${L(have)} L de ${L(goalMl())} L.${exp>have?` Para este horário o ideal seria ${L(exp)} L.`:""}</p><p class="phrase" style="margin-top:10px">${esc(randPhrase())}</p>
+    <div class="wbtns"><button class="btn" data-w="250">Bebi 250 ml</button><button class="btn" data-w="500">Bebi 500 ml</button></div>
+    <button class="later" id="mclose">Agora não</button></div></div>`;
+  m.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{ m.innerHTML=""; act(()=>{ const dd=dayData(today()); dd.waterMl=waterMl(dd)+(+b.dataset.w); delete dd.water; markDrank(); saveDay(today(),600); }); });
+  m.querySelector("#mclose").onclick = () => { m.innerHTML=""; markDrank(); };
+}
+function checkWater(){
+  if (!S.profile || !on("agua") || !waterEvery()) return;
+  const now = new Date(), h = now.getHours(); if (h<WATER_FROM || h>=WATER_TO) return;
+  if (waterMl(S.days[today()]||{}) >= goalMl()) return;
+  const last = +(lsGet("jl-lastwater")||0);
+  if (!last){ markDrank(); return; }
+  if (Date.now()-last < waterEvery()*60000) return;
+  if (document.hidden){
+    if (window.Notification && Notification.permission==="granted"){
+      const body = `Hora de beber água 💧 ${randPhrase()}`;
+      (navigator.serviceWorker?.ready || Promise.reject()).then(r=>r.showNotification("Jornada Leve", {body, icon:"icons/icon-192.png", tag:"agua"})).catch(()=>{ try { new Notification("Jornada Leve", {body}); } catch(e){} });
+      markDrank();
+    }
+    return;
+  }
+  waterPopup();
+}
+setInterval(checkWater, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) setTimeout(checkWater, 1500); });
 
 function progressView(s){
   const range = s.start - s.goal, pct = range>0 ? Math.min(100, Math.round(s.lost/range*100)) : 0;
@@ -972,7 +1027,10 @@ function setupView(editing){
       <div class="two" style="margin-top:12px">
         <div class="field"><label for="wg">Meta de água (litros)</label><input type="number" id="wg" inputmode="decimal" min="1" max="6" step="0.25" value="${p.waterL ?? ((p.waterGoal||8)*0.25)}"></div>
         <div class="field"><label for="fg">Meta de jejum (horas)</label><input type="number" id="fg" min="8" max="20" value="${p.fastGoal}"></div>
-      </div><p class="note" style="margin-top:8px">Pelo seu plano, do jantar das 22h ao café das 9h são 11 horas.</p>
+      </div>
+      <div class="field" style="margin-top:12px"><label>Lembrete de água (das 8h às 22h)</label><div class="choice" id="wev" style="flex-wrap:wrap">${[[0,"Desligado"],[30,"30 min"],[60,"1 h"],[90,"1h30"],[120,"2 h"]].map(([v,t])=>`<button type="button" data-v="${v}" aria-pressed="${(p.waterEvery??60)===v}">${t}</button>`).join("")}</div></div>
+      ${window.Notification && Notification.permission!=="granted"?`<button class="btn ghost block" type="button" id="wnot" style="margin-top:8px">Avisar também com notificação do celular</button>`:""}
+      <p class="note" style="margin-top:8px">Pelo seu plano, do jantar das 22h ao café das 9h são 11 horas.</p>
       <button class="toggle" type="button" role="switch" id="smenu" aria-checked="${p.showMenu!==false}" style="margin-top:10px"><span><b>Mostrar o cardápio da nutricionista</b><br><span class="note">Desligue se você segue outro plano.</span></span><span class="sw"></span></button>
     </section>
     <section class="card stack"><div class="card-head" style="margin:0"><h2>Refeição livre</h2></div>
@@ -988,7 +1046,9 @@ function setupView(editing){
     <button class="btn block" id="save" style="padding:15px">${editing?"Salvar ajustes":"Começar a jornada"}</button>
     ${editing?`<p class="note">Seus dados ficam salvos na sua conta do Claude. Mudar os hábitos recalcula os pontos dos dias anteriores.</p>`:""}
   </div>`);
-  let tperiod = treat().period, showMenu = p.showMenu!==false;
+  let tperiod = treat().period, showMenu = p.showMenu!==false, wEvery = p.waterEvery ?? 60;
+  frag.querySelectorAll("#wev button").forEach(b=>b.onclick=()=>{ wEvery=+b.dataset.v; b.parentNode.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", x===b)); });
+  frag.getElementById("wnot")?.addEventListener("click", e => { Notification.requestPermission().then(r=>{ toast(r==="granted"?"Notificações ligadas 💧":"O celular não liberou as notificações"); if (r==="granted") e.target.remove(); }); });
   frag.getElementById("smenu").onclick = e => { showMenu=!showMenu; e.currentTarget.setAttribute("aria-checked", showMenu); };
   frag.querySelectorAll("#tp button").forEach(b=>b.onclick=()=>{ tperiod=b.dataset.p; b.parentNode.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", x===b)); });
   const hl = frag.getElementById("hl");
@@ -1002,7 +1062,7 @@ function setupView(editing){
     const sw=num("sw"), gw=num("gw");
     if (!(sw>30) || !(gw>30)) return toast("Preencha o peso inicial e a meta");
     if (gw>=sw) return toast("A meta precisa ser menor que o peso inicial");
-    S.profile = {...p, startWeight:sw, goalWeight:gw, habits:[...sel], waterL:Math.min(6,Math.max(1,num("wg")||3)), fastGoal:Math.max(8,num("fg")||12), created:p.created||today(), showMenu,
+    S.profile = {...p, startWeight:sw, goalWeight:gw, habits:[...sel], waterL:Math.min(6,Math.max(1,num("wg")||3)), fastGoal:Math.max(8,num("fg")||12), created:p.created||today(), showMenu, waterEvery:wEvery,
       treat:{title:document.getElementById("tt").value.trim()||"Pizza", em:document.getElementById("te").value.trim()||"🍕", period:tperiod, pct:Math.min(100,Math.max(50,num("tpct")||90))}};
     saveProfile(); syncRank(); S.tab="hoje";
     if (!editing) modal("🌱","Jornada começou!","Marque suas refeições, a água e o jejum ao longo do dia. Cada coisa cumprida vira pontos."); else toast("Ajustes salvos");
