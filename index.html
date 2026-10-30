@@ -1,0 +1,1016 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#010A13">
+<meta name="description" content="Jogo de hábitos para emagrecer: refeições, água, jejum e exercício viram pontos, elos e recompensas.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jornada Leve">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html,body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Jornada Leve</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-column phone app styled as a fantasy game client: sticky rank header with crest, gold-framed panels, hextech tab bar. Single dark look by choice. */
+:root{
+  color-scheme:dark;
+  --bg:#010A13; --bg-2:#091428; --surface:#0A1428; --surface-2:#111E33; --line:#463714; --line-bright:#785A28;
+  --fg:#F0E6D2; --muted:#A09B8C; --dim:#5B5A56;
+  --gold:#C8AA6E; --gold-bright:#F0E6D2; --gold-deep:#785A28; --gold-soft:#1E2328;
+  --accent:#0AC8B9; --accent-soft:#0A323C; --on-accent:#CDFAFA;
+  --good:#0AC8B9; --good-soft:#06333A; --off:#E0544B; --off-soft:#3A1418;
+  --water:#3FA9F5; --water-soft:#0B2340;
+  --display:"Cinzel","Trajan Pro",Georgia,serif;
+  --body:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --r:2px;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);background-image:radial-gradient(120% 60% at 50% 0%,#0B2A3D 0%,transparent 60%),linear-gradient(180deg,var(--bg-2),var(--bg) 40%);background-attachment:fixed;color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent;min-height:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:.04em;font-weight:700;color:var(--gold-bright)}
+.app{max-width:520px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 calc(96px + env(safe-area-inset-bottom,0px))}
+.num{font-variant-numeric:tabular-nums}
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+
+/* cabeçalho de elo */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:linear-gradient(180deg,var(--bg) 85%,transparent);padding-block:12px 14px;display:grid;gap:10px}
+.hud-row{display:flex;align-items:center;gap:12px}
+.lvl{width:64px;height:70px;flex:none;display:block}
+.lvl svg{width:100%;height:100%;display:block;filter:drop-shadow(0 0 10px var(--tier-glow,transparent))}
+.who{flex:1;min-width:0}
+.who .eyebrow{display:block}
+.who h1{font-size:22px;line-height:1.1;text-transform:uppercase;color:var(--tier,var(--gold-bright))}
+.who .sub{color:var(--muted);font-size:13.5px}
+.streak{display:grid;justify-items:center;font-family:var(--display);font-weight:800;font-size:20px;color:var(--gold-bright);border:1px solid var(--line-bright);background:var(--gold-soft);padding:4px 10px 3px;min-width:56px;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%,0 8px)}
+.streak small{font-family:var(--body);font-size:10px;letter-spacing:.12em;color:var(--gold);font-weight:700}
+.bar{height:8px;background:#0B0F14;border:1px solid var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#005A82,var(--accent));box-shadow:0 0 8px var(--accent);transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.bar-meta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:5px;letter-spacing:.02em}
+
+/* painéis com moldura dourada */
+.stack{display:grid;gap:16px}
+.card{position:relative;background:linear-gradient(180deg,rgba(17,30,51,.92),rgba(1,10,19,.94));border:1px solid var(--line-bright);border-radius:var(--r);padding:18px 16px 16px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),inset 0 1px 0 rgba(200,170,110,.15)}
+.card::before{content:"";position:absolute;left:50%;top:-5px;width:9px;height:9px;transform:translateX(-50%) rotate(45deg);background:var(--bg);border:1px solid var(--gold)}
+.card::after{content:"";position:absolute;inset:3px;border:1px solid rgba(70,55,20,.55);pointer-events:none}
+.card h2{font-size:17px;text-transform:uppercase}
+.card-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.pts-pill{font-size:12.5px;font-weight:700;color:var(--accent);white-space:nowrap;letter-spacing:.03em}
+.daynav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-block:2px}
+.daynav button{background:var(--gold-soft);border:1px solid var(--line-bright);width:40px;height:40px;font-size:20px;color:var(--gold)}
+.daynav button:disabled{opacity:.3;cursor:default}
+.daynav .d{text-align:center}
+.daynav .d strong{font-family:var(--display);font-size:20px;display:block;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-bright)}
+.daynav .d span{font-size:13px;color:var(--muted)}
+.today-score{display:flex;gap:10px}
+.today-score>div{flex:1;background:var(--gold-soft);border:1px solid var(--line);padding:10px 12px;border-left:3px solid var(--gold)}
+.today-score b{font-family:var(--display);font-size:26px;display:block;line-height:1.1;color:var(--gold-bright)}
+.today-score span{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+
+/* refeições */
+.meal{display:grid;grid-template-columns:48px 1fr;gap:12px;padding-block:14px;border-top:1px solid var(--line)}
+.meal:first-of-type{border-top:0;padding-top:0}
+.meal time{font-family:var(--display);font-weight:700;font-size:15px;color:var(--gold);padding-top:2px}
+.meal h3{font-size:15px;text-transform:uppercase;letter-spacing:.06em}
+.meal p{margin:3px 0 10px;color:var(--muted);font-size:14.5px}
+.meal .content{min-width:0}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button,.photo-btn{border:1px solid var(--line-bright);background:#1E2328;color:var(--gold-bright);padding:8px 12px;font-weight:600;font-size:14px;letter-spacing:.02em}
+.seg button.on-good{background:linear-gradient(180deg,#0A5A63,#063A44);border-color:var(--accent);color:var(--on-accent);box-shadow:0 0 10px rgba(10,200,185,.35)}
+.seg button.on-off{background:var(--off-soft);border-color:var(--off);color:#FFB4AE}
+.photo-btn{border-style:dashed;border-color:var(--accent);color:var(--accent);background:transparent}
+.photo-btn[disabled]{opacity:.6}
+.bonus{margin-top:6px;padding:10px 12px;background:linear-gradient(90deg,rgba(200,170,110,.22),rgba(200,170,110,.05));border:1px solid var(--gold);color:var(--gold-bright);font-weight:700;font-size:14px;display:flex;justify-content:space-between;letter-spacing:.04em;text-transform:uppercase}
+.seg button.on-skip{background:#1E2328;border-color:var(--muted);color:var(--fg);box-shadow:inset 0 0 0 1px var(--muted)}
+.seg button.on-free{background:linear-gradient(180deg,#C8AA6E,#785A28);border-color:var(--gold-bright);color:#010A13;box-shadow:0 0 10px rgba(200,170,110,.45)}
+.treat .head{display:flex;align-items:center;gap:12px}
+.treat .em{font-size:30px;width:52px;height:56px;flex:none;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#3B2E12,#0B0F14 70%);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.treat .tx{flex:1;min-width:0}
+.treat .tx b{font-family:var(--display);font-size:16px;color:var(--gold-bright);letter-spacing:.04em;display:block}
+.treat .tx span{font-size:14px;color:var(--muted)}
+.treat .bar{margin-top:12px}
+.treat .bar i{background:linear-gradient(90deg,var(--gold-deep),var(--gold-bright));box-shadow:0 0 8px var(--gold)}
+.pips{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}
+.pips div{text-align:center;font-size:11px;color:var(--dim);letter-spacing:.06em}
+.pips i{display:block;height:6px;margin-bottom:4px;background:#1E2328;border:1px solid var(--line)}
+.pips .p4 i{background:var(--gold);border-color:var(--gold-bright)}
+.pips .p3 i{background:var(--gold-deep)}
+.pips .p1 i,.pips .p2 i{background:#3B2E12}
+.pips .now{color:var(--gold-bright)}
+.treat.ready{border-color:var(--gold-bright);box-shadow:0 0 22px rgba(200,170,110,.25),inset 0 0 0 1px rgba(0,0,0,.6)}
+.choice{display:flex;gap:8px}
+.choice button{flex:1;border:1px solid var(--line-bright);background:#1E2328;color:var(--muted);padding:10px;font-weight:700;letter-spacing:.04em}
+.choice button[aria-pressed="true"]{border-color:var(--accent);color:var(--on-accent);background:linear-gradient(180deg,#0A3C46,#05202A)}
+.bonus.locked{background:transparent;border-color:var(--line);color:var(--dim)}
+.review{display:grid;grid-template-columns:64px 1fr;gap:10px;margin-top:10px;padding:10px;background:#0B0F14;border:1px solid var(--line);align-items:start}
+.review img{width:64px;height:64px;object-fit:cover;display:block;border:1px solid var(--gold-deep)}
+.review .nota{font-family:var(--display);font-weight:800;font-size:19px;color:var(--gold-bright)}
+.review .nota small{font-family:var(--body);font-size:12.5px;color:var(--accent);font-weight:700;margin-left:6px}
+.review p{margin:2px 0 0;font-size:14px;color:var(--fg)}
+.review .x{border:0;background:transparent;color:var(--muted);font-size:12.5px;padding:4px 0;text-decoration:underline}
+.how{font-size:12.5px;color:var(--muted);margin:-2px 0 14px;letter-spacing:.02em}
+
+/* água */
+.wgauge{display:flex;align-items:flex-end;gap:14px}
+.wgauge .big{font-family:var(--display);font-weight:800;font-size:34px;line-height:1;color:var(--water);text-shadow:0 0 14px rgba(63,169,245,.4)}
+.wgauge .of{color:var(--muted);font-size:14.5px;padding-bottom:4px}
+.wbar{height:14px;background:#0B0F14;border:1px solid #1B3B5E;overflow:hidden;margin-top:12px}
+.wbar i{display:block;height:100%;background:linear-gradient(90deg,#0B4F8A,var(--water));box-shadow:0 0 10px var(--water);transition:width .4s}
+.wbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.wbtns button{flex:1 1 auto;border:1px solid #1B5A8E;background:var(--water-soft);color:#BFE3FF;padding:9px 10px;font-weight:700;font-size:14.5px}
+.wbtns button.minus{flex:0 0 auto;border-color:var(--line);background:transparent;color:var(--muted)}
+
+/* jejum */
+.fast{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center}
+.ring{width:96px;height:96px}
+.ring circle{fill:none;stroke-width:7}
+.ring .track{stroke:#1E2328}
+.ring .prog{stroke:var(--gold);transition:stroke-dashoffset .6s;filter:drop-shadow(0 0 4px rgba(200,170,110,.6))}
+.ring text{fill:var(--gold-bright);font-family:var(--display);font-weight:800;font-size:19px}
+.ring .t2{fill:var(--muted);font-family:var(--body);font-size:10px;font-weight:700;letter-spacing:.1em}
+.fast .ctl{display:grid;gap:8px}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper button{width:36px;height:36px;border:1px solid var(--line-bright);background:#1E2328;font-size:18px;font-weight:700;color:var(--gold)}
+.stepper output{font-family:var(--display);font-weight:800;font-size:20px;min-width:58px;text-align:center;color:var(--gold-bright)}
+.btn{border:2px solid var(--accent);padding:11px 16px;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;background:linear-gradient(180deg,#0A3C46,#05202A);color:var(--on-accent);box-shadow:0 0 14px rgba(10,200,185,.25),inset 0 0 12px rgba(10,200,185,.2)}
+.btn.ghost{border:1px solid var(--line-bright);background:#1E2328;color:var(--gold-bright);box-shadow:none}
+.btn.block{width:100%}
+
+/* hábitos */
+.habit{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);background:rgba(30,35,40,.6);width:100%;text-align:left}
+.habit + .habit{margin-top:8px}
+.habit .ico{width:40px;height:40px;background:#0B0F14;border:1px solid var(--line-bright);display:grid;place-items:center;font-size:19px;flex:none;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.habit .tx{flex:1;min-width:0}
+.habit .tx b{display:block;font-size:15.5px;font-weight:600}
+.habit .tx span{font-size:13px;color:var(--muted)}
+.habit .chk{width:24px;height:24px;border:1px solid var(--line-bright);display:grid;place-items:center;flex:none;font-weight:800;color:transparent;transform:rotate(45deg)}
+.habit .chk::before{content:"";width:10px;height:10px;background:transparent}
+.habit.done{border-color:var(--accent);background:linear-gradient(90deg,rgba(10,200,185,.16),rgba(10,200,185,.02))}
+.habit.done .chk{border-color:var(--accent)}
+.habit.done .chk::before{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.habit[disabled]{cursor:default;opacity:.85}
+
+/* progresso */
+.bigstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bigstats div{background:#0B0F14;border:1px solid var(--line);padding:10px}
+.bigstats b{display:block;font-family:var(--display);font-size:21px;line-height:1.1;color:var(--gold-bright)}
+.bigstats span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.chart{width:100%;height:auto;display:block;margin-top:14px}
+.chart text{fill:var(--muted);font-size:10px;font-family:var(--body)}
+.chart .grid{stroke:#1E2328;stroke-width:1}
+.chart .goal{stroke:var(--gold);stroke-dasharray:5 4;stroke-width:1.5}
+.chart .line{stroke:var(--accent);stroke-width:2.5;fill:none;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 4px rgba(10,200,185,.6))}
+.chart .area{fill:var(--accent-soft);stroke:none}
+.chart .dot{fill:var(--accent)}
+.chart .last{fill:var(--bg);stroke:var(--gold-bright);stroke-width:3}
+.weigh{display:flex;gap:8px;margin-top:14px}
+.weigh input{flex:1;min-width:0}
+input[type=number],input[type=text]{border:1px solid var(--line-bright);background:#0B0F14;color:var(--fg);border-radius:0;padding:10px 12px;font:inherit;font-size:16px;width:100%}
+input::placeholder{color:var(--dim)}
+.history{display:grid;gap:0;margin-top:10px;font-size:15px}
+.history div{display:flex;justify-content:space-between;padding-block:7px;border-top:1px solid var(--line)}
+.history span{color:var(--muted)}
+
+/* prêmios */
+.reward{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding-block:12px;border-top:1px solid var(--line);align-items:center}
+.reward:first-of-type{border-top:0;padding-top:0}
+.reward b{font-size:16px;font-weight:600}
+.reward .need{font-size:13px;color:var(--muted)}
+.reward .bar{grid-column:1/-1;height:6px}
+.reward.ready .bar i{background:linear-gradient(90deg,var(--gold-deep),var(--gold-bright));box-shadow:0 0 8px var(--gold)}
+.reward.claimed b{text-decoration:line-through;color:var(--muted)}
+.tag{font-size:12.5px;font-weight:700;padding:5px 10px;background:#1E2328;color:var(--muted);border:1px solid var(--line);letter-spacing:.04em}
+.tag.ready{background:linear-gradient(180deg,#C8AA6E,#785A28);color:#010A13;border-color:var(--gold-bright);text-transform:uppercase}
+.tag.claimed{background:var(--good-soft);color:var(--accent);border-color:var(--accent)}
+.reward-edit{display:grid;grid-template-columns:1fr 96px;gap:8px;padding-block:12px;border-top:1px solid var(--line)}
+.reward-edit .row{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end}
+.add-reward{display:grid;grid-template-columns:1fr 92px auto;gap:8px;margin-top:12px}
+.add-reward .btn{padding:8px 14px}
+.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.badge{padding:12px 6px;text-align:center;min-width:0}
+.badge .em{font-size:24px;width:58px;height:64px;margin:0 auto;display:grid;place-items:center;background:#0B0F14;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);filter:grayscale(1);opacity:.35;box-shadow:inset 0 0 0 2px var(--line)}
+.badge b{display:block;font-size:13px;margin-top:6px;line-height:1.2;font-weight:700;color:var(--dim)}
+.badge span{display:block;font-size:11.5px;color:var(--dim);margin-top:2px;line-height:1.25}
+.badge.got .em{filter:none;opacity:1;background:radial-gradient(circle at 50% 35%,#3B2E12,#0B0F14 70%)}
+.badge.got b{color:var(--gold-bright)}
+.badge.got span{color:var(--muted)}
+button.badge{border:1px solid transparent;background:transparent;color:inherit;font:inherit;cursor:pointer}
+button.badge[aria-pressed="true"]{border-color:var(--gold);background:var(--gold-soft)}
+.badge .prize{display:block;font-size:11px;color:var(--accent);margin-top:4px;line-height:1.2}
+.badge.got .prize{color:var(--gold-bright)}
+.badge .prize.claimed{color:var(--dim);text-decoration:line-through}
+.bpanel{margin-top:14px;padding:12px;border:1px solid var(--gold-deep);background:#0B0F14;display:grid;gap:10px}
+.bpanel .top{display:flex;gap:10px;align-items:center}
+.bpanel .top b{font-family:var(--display);color:var(--gold-bright);letter-spacing:.04em}
+.bpanel .top span{display:block;font-size:13px;color:var(--muted)}
+.bpanel form{display:flex;gap:8px}
+.bpanel form input{flex:1;min-width:0}
+.track{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center;padding-block:12px;border-top:1px solid var(--line)}
+.track:first-of-type{border-top:0;padding-top:0}
+.track .crest{width:44px;height:48px}
+.track .crest svg{width:100%;height:100%;display:block}
+.track .tt{min-width:0}
+.track .row1{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.track .row1 b{font-size:15.5px;font-weight:700}
+.track .row1 span{font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.track .bar{margin-top:6px;height:6px}
+.track .nx{font-size:12.5px;color:var(--muted);margin-top:4px}
+.lb{display:grid;gap:0}
+.lb-row{display:grid;grid-template-columns:28px 40px 1fr auto;gap:10px;align-items:center;padding-block:10px;border-top:1px solid var(--line)}
+.lb-row:first-child{border-top:0;padding-top:0}
+.lb-row .pos{font-family:var(--display);font-weight:800;font-size:18px;color:var(--muted);text-align:center}
+.lb-row:nth-child(1) .pos{color:#F7DD8C}.lb-row:nth-child(2) .pos{color:#AEB8C2}.lb-row:nth-child(3) .pos{color:#B87A4B}
+.lb-row .em{width:40px;height:44px}.lb-row .em svg{width:100%;height:100%;display:block}
+.lb-row .nm{min-width:0}
+.lb-row .nm b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-row .nm span{font-size:12.5px;color:var(--muted)}
+.lb-row .sc{text-align:right;font-family:var(--display);font-weight:800;font-size:18px;color:var(--gold-bright)}
+.lb-row .sc small{display:block;font-family:var(--body);font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.06em}
+.lb-row.me{background:linear-gradient(90deg,rgba(10,200,185,.14),transparent);box-shadow:inset 3px 0 0 var(--accent)}
+.toggle{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line);width:100%;background:transparent;border-left:0;border-right:0;border-bottom:0;text-align:left}
+.toggle b{font-weight:600}
+.toggle span.sw{width:42px;height:24px;border:1px solid var(--line-bright);background:#0B0F14;position:relative;flex:none}
+.toggle span.sw::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;background:var(--dim);transition:left .2s}
+.toggle[aria-checked="true"] span.sw{border-color:var(--accent)}
+.toggle[aria-checked="true"] span.sw::after{left:21px;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.steps{margin:0;padding-left:20px;display:grid;gap:6px;color:var(--fg);font-size:15px}
+.levels{display:grid;gap:4px;font-size:15px}
+.levels div{display:flex;justify-content:space-between;align-items:center;color:var(--muted);padding:5px 8px;border:1px solid transparent}
+.levels div.cur{color:var(--gold-bright);font-weight:700;border-color:var(--gold-deep);background:var(--gold-soft)}
+.levels i{display:inline-block;width:10px;height:10px;transform:rotate(45deg);margin-right:10px;vertical-align:1px}
+
+/* abas */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:linear-gradient(180deg,#0A1428,#010A13);border-top:1px solid var(--line-bright);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.tabs[hidden]{display:none}
+.tabs-in{display:flex;width:100%;max-width:520px}
+.tabs button{flex:1;border:0;background:transparent;padding:10px 4px 12px;display:grid;gap:3px;justify-items:center;font-family:var(--display);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);position:relative}
+.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6}
+.tabs button[aria-selected="true"]{color:var(--gold-bright)}
+.tabs button[aria-selected="true"]::before{content:"";position:absolute;top:-1px;left:22%;right:22%;height:2px;background:var(--gold);box-shadow:0 0 10px var(--gold)}
+
+/* configuração */
+.setup h2{font-size:22px}
+.setup .lead{color:var(--muted);margin:8px 0 0;font-size:16px}
+.field{display:grid;gap:6px}
+.field label{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.note{font-size:13px;color:var(--muted)}
+.hero-title{font-size:30px;margin-top:6px;text-transform:uppercase;line-height:1.1;background:linear-gradient(180deg,#F0E6D2,#C8AA6E);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* avisos */
+.toasts{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 12px);display:grid;justify-items:center;gap:6px;z-index:20;pointer-events:none}
+.toast{background:#0A1428;color:var(--on-accent);border:1px solid var(--accent);font-weight:700;padding:8px 16px;font-size:15px;letter-spacing:.03em;animation:pop .25s ease-out;box-shadow:0 0 18px rgba(10,200,185,.35)}
+.toast.gold{border-color:var(--gold);color:var(--gold-bright);box-shadow:0 0 18px rgba(200,170,110,.45)}
+@keyframes pop{from{transform:translateY(-8px) scale(.96);opacity:0}}
+@keyframes rise{from{transform:scale(.6);opacity:0;filter:brightness(2)}}
+.modal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,rgba(10,50,60,.7),rgba(1,10,19,.92));padding:24px}
+.modal .card{max-width:340px;text-align:center;animation:pop .3s ease-out}
+.modal .big{font-size:56px;line-height:1;display:grid;place-items:center;animation:rise .6s ease-out}
+.modal .big svg{width:120px;height:132px}
+.modal h2{font-size:24px;margin-top:10px;text-transform:uppercase}
+.modal p{color:var(--muted);font-size:15.5px}
+.sync{font-size:12px;color:var(--dim);text-align:center;margin-top:20px;letter-spacing:.04em}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="app" id="app"></div>
+<nav class="tabs" id="tabs" hidden><div class="tabs-in" role="tablist">
+  <button role="tab" data-tab="hoje" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M12 2l3 7 7 1-5 5 1.5 7L12 18.5 5.5 22 7 15 2 10l7-1z"/></svg>Hoje</button>
+  <button role="tab" data-tab="progresso" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 20h18M5 16l5-5 4 3 6-7"/><path d="M15 7h5v5"/></svg>Progresso</button>
+  <button role="tab" data-tab="premios" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M7 3h10v5a5 5 0 01-10 0zM7 5H3v2a4 4 0 004 4M17 5h4v2a4 4 0 01-4 4M12 13v4M8 21h8l-1-4H9z"/></svg>Prêmios</button>
+  <button role="tab" data-tab="ranking" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 21V12h5v9M9.5 21V6h5v15M15 21v-6h5v6"/></svg>Ranking</button>
+  <button role="tab" data-tab="ajustes" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M12 2l8.66 5v10L12 22l-8.66-5V7z"/><circle cx="12" cy="12" r="3"/></svg>Ajustes</button>
+</div></nav>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div id="modal"></div>
+
+<script src="config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+(() => {
+// ---------- conteúdo do plano ----------
+const WEEKS = [
+  {nome:"Semana 1 · arroz e frango", cafe:"2 fatias de pão integral, 2 ovos e 1 colher de requeijão light", prato:"Arroz 100 g + frango desfiado 120 g", lanche:"7 Magic Toast + frango desfiado 80 g + requeijão light"},
+  {nome:"Semana 2 · batata doce e carne", cafe:"Tapioca 45 g + 2 ovos + requeijão light", prato:"Batata doce 141 g + carne grelhada 89 g", lanche:"Whey 30 g + 100 ml de leite desnatado + banana"},
+  {nome:"Semana 3 · macarrão e carne moída", cafe:"7 bolachas de arroz + atum 80 g + requeijão light", prato:"Macarrão 100 g + carne moída 63 g", lanche:"7 Magic Toast + frango desfiado 80 g + requeijão light"},
+  {nome:"Semana 4 · mandioca e peixe", cafe:"7 Magic Toast + 2 ovos + requeijão light", prato:"Mandioca 107 g + filé de peixe 115 g", lanche:"Whey 30 g + 100 ml de leite desnatado + banana"},
+];
+const MEALS = [
+  {id:"cafe", hora:"09h", nome:"Café da manhã", txt:w=>w.cafe},
+  {id:"almoco", hora:"13h", nome:"Almoço", txt:w=>w.prato+", com salada e legumes à vontade"},
+  {id:"lanche", hora:"16h", nome:"Lanche", txt:w=>w.lanche},
+  {id:"jantar", hora:"22h", nome:"Jantar", txt:w=>w.prato+", com salada e legumes à vontade"},
+];
+const menuText = (m,w) => S.profile?.showMenu===false ? "Siga o seu plano alimentar" : m.txt(w);
+// Pontos de cada hábito
+const P = {mealOn:20, mealOff:-20, perfect:30, photoMax:15, per100ml:1, waterGoal:15, fastGoal:30, fastHour:2, weigh:10};
+const HABITS = [
+  {id:"refeicoes", ico:"🍽️", nome:"Refeições do plano", desc:"Marque cada refeição ou mande foto. +20 no plano, −20 se fugir, 0 se pular, até +15 pela foto, +30 no dia perfeito", fixed:true},
+  {id:"agua", ico:"💧", nome:"Água", desc:"Meta em litros. +1 a cada 100 ml, +15 ao bater a meta"},
+  {id:"jejum", ico:"⏳", nome:"Jejum", desc:"Do jantar ao café. +2 por hora, +30 ao bater a meta"},
+  {id:"exercicio", ico:"🏃", nome:"30 min de exercício", desc:"Caminhada, academia, bike", pts:25, check:true},
+  {id:"sono", ico:"😴", nome:"Dormir 7 h ou mais", desc:"Sono ajuda a controlar a fome", pts:10, check:true},
+  {id:"semdoce", ico:"🍬", nome:"Dia sem doces", desc:"Nada fora do plano com açúcar", pts:15, check:true},
+  {id:"semrefri", ico:"🥤", nome:"Sem refrigerante ou álcool", desc:"Só água, chá ou café sem açúcar", pts:10, check:true},
+  {id:"passos", ico:"🫀", nome:"40 min de cardio", desc:"Esteira, bike, elíptico, corrida", pts:25, check:true},
+  {id:"pesagem", ico:"⚖️", nome:"Pesagem", desc:"Registre o peso na aba Progresso. +10 por pesagem"},
+];
+const LEVEL_NAMES = ["Ferro","Bronze","Prata","Ouro","Platina","Esmeralda","Diamante","Mestre","Grão-Mestre","Desafiante"];
+const TIER = ["#8C7F75","#B87A4B","#AEB8C2","#E3C27A","#5FC6C0","#2FBF7A","#7FA8FF","#C27BEA","#F0605A","#F7DD8C"];
+// 7 elos com divisões IV a I (níveis 1 a 28), depois Mestre (29), Grão-Mestre (30) e Desafiante (31+)
+const MAX_DIV = 28;
+const tierIdx = n => n<=MAX_DIV ? Math.floor((n-1)/4) : Math.min(9, 7+(n-MAX_DIV-1));
+const division = n => n<=MAX_DIV ? ["IV","III","II","I"][(n-1)%4] : "";
+const tierColor = n => TIER[tierIdx(n)];
+function emblem(n){
+  const c = tierColor(n), id = "g"+n+Math.random().toString(36).slice(2,6);
+  return `<svg viewBox="0 0 64 70" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c}"/><stop offset="1" stop-color="#0A1428"/></linearGradient></defs>
+  <path d="M32 2 L60 16 L60 46 L32 68 L4 46 L4 16 Z" fill="url(#${id})" stroke="#C8AA6E" stroke-width="2"/>
+  <path d="M32 9 L54 20 L54 43 L32 60 L10 43 L10 20 Z" fill="#010A13" fill-opacity=".55" stroke="${c}" stroke-width="1.2"/>
+  ${n>MAX_DIV?`<path d="M18 9 L24 2 L32 8 L40 2 L46 9" fill="none" stroke="#F0E6D2" stroke-width="1.6"/>`:""}
+  <text x="32" y="42" text-anchor="middle" font-family="Cinzel,Georgia,serif" font-weight="800" font-size="22" fill="#F0E6D2">${division(n)||"★"}</text></svg>`;
+}
+const levelAt = n => n<=1 ? 0 : Math.round(145*Math.pow(n-1,1.8)/50)*50;   // pontos acumulados para chegar ao nível n (Desafiante perto de 1 ano de dias bons)
+const levelName = n => LEVEL_NAMES[tierIdx(n)] + (division(n)?" "+division(n):"") + (n>MAX_DIV+3?` +${n-MAX_DIV-3}`:"");
+
+// ---------- datas ----------
+const iso = d => d.toLocaleDateString("sv-SE");
+const today = () => iso(new Date());
+const addDays = (s,n) => { const d = new Date(s+"T12:00:00"); d.setDate(d.getDate()+n); return iso(d); };
+const weekOf = s => { const dd = +s.slice(8,10); return dd>28 ? 0 : Math.floor((dd-1)/7); };
+const fmtDay = s => new Date(s+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
+const fmtShort = s => new Date(s+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
+const kg = v => v.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
+
+// ---------- estado e armazenamento ----------
+let rankDb = null, rankUser = null, myId = null, lastRank = "";
+const R_ = {rows:[], names:{}, mode:"semana", ok:false};
+const S = {profile:null, days:{}, ready:false, cloud:false, tab:"hoje", day:today(), photoOk:false, busy:{}};
+let sampleFn = null;
+const LS = "jornada-leve-v1";
+try { const c = JSON.parse(localStorage.getItem(LS)||"null"); if (c) { S.profile=c.profile; S.days=c.days||{}; } } catch {}
+const cache = () => { try { localStorage.setItem(LS, JSON.stringify({profile:S.profile, days:S.days})); } catch {} };
+let col = null;
+const chains = {};
+function writeDoc(key, data){
+  cache();
+  if (!col) return;
+  chains[key] = (chains[key]||Promise.resolve()).then(()=>col.doc(key).set(JSON.parse(JSON.stringify(data)))).catch(e=>console.warn("save",e));
+}
+const timers = {};
+function saveDay(d, delay=0){ clearTimeout(timers[d]); timers[d]=setTimeout(()=>writeDoc("day-"+d, S.days[d]||{}), delay); cache(); }
+function saveProfile(){ writeDoc("profile", S.profile); }
+
+let fbUser = null;
+async function connectSample(){
+  const url = window.APP_CONFIG?.photoApi; if (!url || !fbUser) return;
+  sampleFn = { json: async (prompt, {images}) => {
+    const b64 = await new Promise((ok,ko)=>{ const r=new FileReader(); r.onload=()=>ok(String(r.result).split(",")[1]); r.onerror=ko; r.readAsDataURL(images[0]); });
+    const res = await fetch(url, {method:"POST", headers:{"Content-Type":"application/json", "Authorization":"Bearer "+await fbUser.getIdToken()}, body:JSON.stringify({prompt, image:b64})});
+    if (res.status===429) throw {code:"rate_limited"};
+    if (!res.ok) throw {code:"failed"};
+    return res.json();
+  }};
+  S.photoOk = true; render();
+}
+async function shrink(file, max, q){
+  const url = URL.createObjectURL(file);
+  try { const img = await new Promise((ok,ko)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=ko; i.src=url; });
+    const k = Math.min(1, max/Math.max(img.naturalWidth,img.naturalHeight)); const c=document.createElement("canvas");
+    c.width=Math.round(img.naturalWidth*k); c.height=Math.round(img.naturalHeight*k);
+    if (max<=200){ const s=Math.min(c.width,c.height); c.width=c.height=Math.min(s,160); const sw=Math.min(img.naturalWidth,img.naturalHeight);
+      c.getContext("2d").drawImage(img,(img.naturalWidth-sw)/2,(img.naturalHeight-sw)/2,sw,sw,0,0,c.width,c.height); return c.toDataURL("image/jpeg",q); }
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    return await new Promise(ok=>c.toBlob(ok,"image/jpeg",q));
+  } finally { URL.revokeObjectURL(url); }
+}
+function pickPhoto(d, mealId, w){
+  const inp = document.createElement("input"); inp.type="file"; inp.accept="image/*";
+  inp.onchange = async () => { const f = inp.files?.[0]; if (!f) return;
+    const meal = MEALS.find(m=>m.id===mealId); S.busy[d+mealId]=true; render();
+    try {
+      const [big, thumb] = await Promise.all([shrink(f,1024,.82), shrink(f,160,.6)]);
+      const prompt = `Você é o avaliador de um jogo de emagrecimento. A pessoa segue um plano de nutricionista e mandou a foto da refeição "${meal.nome}".
+Refeição prevista no plano para esta semana: ${S.profile.showMenu===false?"não informada; avalie se parece uma refeição equilibrada de dieta":meal.txt(w)}.
+Regras do plano: metade do prato com salada e legumes; carboidrato e proteína nas quantidades indicadas; nada frito, doce ou refrigerante fora do plano. As gramas são do alimento pronto.
+Avalie a foto e responda SÓ com JSON: {"nota": inteiro 0 a 10 (10 = exatamente o plano, 7-9 = no plano com pequenas diferenças, 4-6 = parecido mas com porção ou item fora, 0-3 = fora do plano), "no_plano": true ou false, "porcao": "certa" | "pouca" | "muita", "vistos": [até 5 alimentos que você vê], "comentario": "uma ou duas frases em português do Brasil, tom de treinador animado e gentil, dizendo o que ficou bom e uma dica"}.
+Se a foto não for de comida, dê nota 0 e diga isso no comentário.`;
+      const r = await sampleFn.json(prompt, {images:[big]});
+      const nota = Math.max(0, Math.min(10, Math.round(+r.nota||0)));
+      act(()=>{ const dd = dayData(d); dd.photos ||= {}; dd.meals ||= {};
+        dd.photos[mealId] = {nota, porcao:String(r.porcao||"").slice(0,10), comentario:String(r.comentario||"").slice(0,280), vistos:(r.vistos||[]).slice(0,5).map(String), thumb, at:Date.now()};
+        dd.meals[mealId] = (r.no_plano && nota>=6) ? "on" : "off"; delete S.busy[d+mealId]; saveDay(d); });
+    } catch(e){
+      delete S.busy[d+mealId]; render();
+      const msg = {not_granted:"Sem permissão para o Claude ver a foto. Você ainda pode marcar na mão.", rate_limited:"Muitas fotos seguidas. Tente de novo em instantes.", image_rejected:"Essa imagem não foi aceita. Tente outra foto."}[e?.code] || "Não deu para avaliar a foto agora. Tente de novo.";
+      toast(msg);
+    }
+  };
+  inp.click();
+}
+let rankCol = null, rankUnsub = null;
+function watchLeague(){
+  rankUnsub?.(); R_.rows = [];
+  const lg = S.profile?.league; if (!fs || !lg) { rankCol = null; return; }
+  rankCol = fs.collection("ligas/"+lg+"/jogadores");
+  rankUnsub = rankCol.onSnapshot(snap => { R_.rows = snap.docs.map(d=>({id:d.id, ...d.data()})); for (const r of R_.rows) R_.names[r.id] = r.name||""; R_.ok = true; if (S.tab==="ranking") render(); },
+    err => console.warn("ranking", err));
+}
+let fs = null;
+async function connect(){
+  const cfg = window.APP_CONFIG?.firebase;
+  if (!cfg?.apiKey || !window.firebase) return finishBoot();
+  firebase.initializeApp(cfg);
+  if (!S.profile && !localStorage.getItem("jl-offline")){ S.needLogin = true; render(); }
+  fs = firebase.firestore();
+  try { fs.enablePersistence({synchronizeTabs:true}).catch(()=>{}); } catch {}
+  const auth = firebase.auth();
+  auth.getRedirectResult().catch(e=>console.warn(e));
+  auth.onAuthStateChanged(u => {
+    fbUser = u;
+    if (!u){ S.needLogin = !localStorage.getItem("jl-offline"); finishBoot(); return; }
+    S.needLogin = false; myId = u.uid; rankDb = true;
+    connectSample();
+    col = fs.collection("usuarios/"+u.uid+"/dados");
+    let first = true;
+    col.onSnapshot(snap => {
+      if (snap.metadata?.hasPendingWrites) return;
+      const days = {}; let profile = null;
+      snap.docs.forEach(doc => {
+        if (doc.id==="profile") profile = doc.data();
+        else if (doc.id.startsWith("day-")) days[doc.id.slice(4)] = doc.data();
+      });
+      if (first && !profile && S.profile){
+        writeDoc("profile", S.profile);
+        Object.entries(S.days).forEach(([d,v])=>writeDoc("day-"+d, v));
+      } else {
+        S.profile = profile ? structuredClone(profile) : S.profile;
+        for (const [d,v] of Object.entries(days)) S.days[d] = structuredClone(v);
+      }
+      if (first){ const lg = new URLSearchParams(location.search).get("liga"); if (lg && S.profile && S.profile.league!==lg){ S.profile.league = lg.slice(0,24); saveProfile(); toast("Você entrou na liga "+lg); history.replaceState(null,"",location.pathname); } }
+      if (first || S.profile?.league !== rankCol?.path?.split("/")[1]) watchLeague();
+      first = false; S.cloud = true; cache(); finishBoot();
+    }, err => { console.warn(err); finishBoot(); });
+  });
+}
+function loginView(){
+  const frag = $(`<div class="stack setup" style="padding-top:12vh;text-align:center">
+    <div style="width:120px;height:132px;margin:0 auto">${emblem(1)}</div>
+    <div><span class="eyebrow">Jornada Leve</span><h2 class="hero-title">Cada refeição no plano vale pontos</h2>
+    <p class="lead">Entre com sua conta Google para salvar seu progresso na nuvem e disputar o ranking com os amigos.</p></div>
+    <button class="btn block" id="glogin" style="padding:15px">Entrar com Google</button>
+    <button class="btn ghost block" id="offline">Usar só neste aparelho</button></div>`);
+  frag.getElementById("glogin").onclick = async () => { const auth = firebase.auth(), prov = new firebase.auth.GoogleAuthProvider();
+    try { await auth.signInWithPopup(prov); } catch(e){ if (["auth/popup-blocked","auth/operation-not-supported-in-this-environment","auth/cancelled-popup-request"].includes(e.code)) auth.signInWithRedirect(prov); else toast("Não deu para entrar. Tente de novo."); } };
+  frag.getElementById("offline").onclick = () => { try{localStorage.setItem("jl-offline","1");}catch{} S.needLogin=false; render(); };
+  return frag;
+}
+function finishBoot(){ S.ready = true; render(); }
+function weekPoints(){ const per = (()=>{ const d=today(), x=new Date(d+"T12:00:00"); return addDays(d,-((x.getDay()+6)%7)); })();
+  let t=0; for (let i=0;i<7;i++) t += dayPoints(addDays(per,i)); return {pts:t, week:per}; }
+let rankTimer = null;
+function syncRank(){
+  clearTimeout(rankTimer);
+  rankTimer = setTimeout(async () => {
+    if (!rankCol || !myId || !S.profile?.ranking?.on) return;
+    const s = stats(), w = weekPoints();
+    const doc = {name:(fbUser?.displayName||"Jogador").split(" ").slice(0,2).join(" "), level:s.level, total:s.total, week:w.week, weekPts:w.pts, streak:s.streak, best:s.best, perfect:s.perfect, updated:today()};
+    if (S.profile.ranking.kg) doc.lost = Math.round(s.lost*10)/10;
+    const key = JSON.stringify(doc); if (key===lastRank) return; lastRank = key;
+    try { await rankCol.doc(myId).set(doc); } catch(e){ console.warn("ranking", e); lastRank=""; toast("Não deu para atualizar o ranking. Peça ao dono do jogo acesso de Colaborador."); }
+  }, 1500);
+}
+
+// ---------- regras do jogo ----------
+const on = id => !!S.profile?.habits?.includes(id);
+const waterMl = v => v?.waterMl ?? (v?.water||0)*250;              // dias antigos guardavam copos de 250 ml
+const goalMl = () => Math.round((S.profile.waterL ?? (S.profile.waterGoal||8)*0.25)*1000);
+const L = ml => (ml/1000).toLocaleString("pt-BR",{minimumFractionDigits:ml%1000?1:0,maximumFractionDigits:2});
+const photoPts = ph => ph ? Math.round(Math.max(0,Math.min(10,ph.nota||0))*P.photoMax/10) : 0;
+function dayPoints(d, v){
+  v = v || S.days[d] || {}; const p = S.profile; let pts = 0;
+  const meals = v.meals||{};
+  let onPlan = 0;
+  for (const m of MEALS){ if (meals[m.id]==="on"){pts+=P.mealOn;onPlan++;} else if (meals[m.id]==="off") pts+=P.mealOff; pts+=photoPts(v.photos?.[m.id]); }
+  if (onPlan===4) pts+=P.perfect;
+  if (on("agua")){ const ml=waterMl(v), g=goalMl(); pts += Math.floor(Math.min(ml,g)/100)*P.per100ml; if (ml>=g) pts+=P.waterGoal; }
+  if (on("jejum") && v.fast){ pts += Math.floor(Math.min(v.fast,20))*P.fastHour; if (v.fast>=p.fastGoal) pts+=P.fastGoal; }
+  for (const h of HABITS) if (h.check && on(h.id) && v.checks?.[h.id]) pts+=h.pts;
+  if (v.weight) pts+=P.weigh;
+  return pts;
+}
+const onPlanCount = v => MEALS.filter(m=>v?.meals?.[m.id]==="on").length;
+const keptCount = v => MEALS.filter(m=>["on","free"].includes(v?.meals?.[m.id])).length;   // refeição livre não quebra a sequência
+const freeCount = v => MEALS.filter(m=>v?.meals?.[m.id]==="free").length;
+
+// ---------- refeição livre (missão da semana ou do mês) ----------
+const treat = () => ({title:"Pizza", em:"🍕", period:"semana", pct:90, ...(S.profile?.treat||{})});
+function periodOf(d){
+  const t = treat(), x = new Date(d+"T12:00:00");
+  if (t.period==="mes"){ const a = iso(new Date(x.getFullYear(), x.getMonth(), 1, 12)); const b = iso(new Date(x.getFullYear(), x.getMonth()+1, 0, 12)); return {start:a, end:b}; }
+  const back = (x.getDay()+6)%7; const a = addDays(d,-back); return {start:a, end:addDays(a,6)};
+}
+function periodStats(per){
+  let on = 0, free = 0, n = 0;
+  for (let d = per.start; d <= per.end; d = addDays(d,1)){ n++; const v=S.days[d]; on += onPlanCount(v); free += freeCount(v); }
+  const need = Math.ceil(n*4*treat().pct/100);
+  return {on, free, need, days:n, done:on>=need};
+}
+function treatState(){
+  // percorre os períodos desde o primeiro registro; cada período batido dá 1 refeição livre que vale até o fim do período seguinte
+  const ds = Object.keys(S.days).sort(); const cur = periodOf(today());
+  let per = periodOf(ds[0] && ds[0] < cur.start ? ds[0] : today()), carry = 0, avail = 0, st = null;
+  for (let guard=0; guard<200; guard++){
+    st = periodStats(per);
+    const earned = st.done ? 1 : 0;
+    let spend = st.free, fromCarry = Math.min(carry, spend); spend -= fromCarry;
+    const fromNew = Math.min(earned, spend);
+    avail = (carry - fromCarry) + (earned - fromNew);
+    if (per.start === cur.start) break;
+    carry = earned - fromNew;
+    per = periodOf(addDays(per.end,1));
+  }
+  return {...st, per:cur, avail};
+}
+function stats(){
+  const ds = Object.keys(S.days).sort();
+  let total = 0, photos = 0, perfect = 0, mealsOn = 0, waterDays = 0, fastDays = 0, active = 0, weighs = 0, cleanDays = 0;
+  for (const d of ds){ const v=S.days[d]; total+=dayPoints(d,v); const n=onPlanCount(v); mealsOn+=n; if(n===4)perfect++;
+    if (on("agua") && waterMl(v)>=goalMl()) waterDays++;
+    if (on("jejum") && (v.fast||0)>=S.profile.fastGoal) fastDays++;
+    if (v.checks?.exercicio) active++; if (v.checks?.semdoce) cleanDays++; if (v.weight) weighs++; photos += Object.keys(v.photos||{}).length; }
+  // sequência: dias seguidos com 3+ refeições no plano (hoje conta se já bateu)
+  let streak = 0, d = today();
+  if (keptCount(S.days[d])<3) d = addDays(d,-1);
+  while (keptCount(S.days[d])>=3){ streak++; d = addDays(d,-1); }
+  let best = 0, run = 0, prev = null;
+  for (const x of ds){ if (keptCount(S.days[x])>=3){ run = (prev && addDays(prev,1)===x) ? run+1 : 1; prev = x; best=Math.max(best,run);} }
+  const weights = ds.filter(x=>S.days[x].weight).map(x=>({d:x,w:+S.days[x].weight}));
+  const start = +S.profile.startWeight, goal = +S.profile.goalWeight;
+  const cur = weights.length ? weights[weights.length-1].w : start;
+  const lost = Math.max(0, start-cur);
+  let level = 1; while (total>=levelAt(level+1)) level++;
+  return {total, photos, perfect, mealsOn, waterDays, fastDays, active, weighs, cleanDays, streak, best, weights, start, goal, cur, lost, level};
+}
+const BADGES = [
+  {id:"primeiro", em:"🥚", nome:"Primeiro passo", desc:"1ª refeição no plano", ok:s=>s.mealsOn>=1},
+  {id:"perfeito", em:"⭐", nome:"Dia perfeito", desc:"4 refeições no plano", ok:s=>s.perfect>=1},
+  {id:"seq3", em:"🔥", nome:"Pegando fogo", desc:"3 dias seguidos", ok:s=>s.best>=3},
+  {id:"seq7", em:"📅", nome:"Semana cheia", desc:"7 dias seguidos", ok:s=>s.best>=7},
+  {id:"seq30", em:"👑", nome:"Mês de ferro", desc:"30 dias seguidos", ok:s=>s.best>=30},
+  {id:"marmita50", em:"🍱", nome:"Marmiteiro", desc:"50 refeições no plano", ok:s=>s.mealsOn>=50},
+  {id:"agua", em:"💧", nome:"Hidratado", desc:"Meta de água 7 vezes", ok:s=>s.waterDays>=7, h:"agua"},
+  {id:"jejum", em:"⏳", nome:"Paciência", desc:"Meta de jejum 7 vezes", ok:s=>s.fastDays>=7, h:"jejum"},
+  {id:"ativo", em:"🏃", nome:"Em movimento", desc:"10 dias de exercício", ok:s=>s.active>=10, h:"exercicio"},
+  {id:"balanca", em:"⚖️", nome:"Sem medo da balança", desc:"4 pesagens", ok:s=>s.weighs>=4},
+  {id:"kg1", em:"🪶", nome:"1º quilo", desc:"Perdeu 1 kg", ok:s=>s.lost>=1},
+  {id:"kg3", em:"🎈", nome:"3 kg a menos", desc:"Perdeu 3 kg", ok:s=>s.lost>=3},
+  {id:"kg5", em:"🚀", nome:"5 kg a menos", desc:"Perdeu 5 kg", ok:s=>s.lost>=5},
+  {id:"kg10", em:"🏔️", nome:"10 kg a menos", desc:"Perdeu 10 kg", ok:s=>s.lost>=10},
+  {id:"meta", em:"🏆", nome:"Meta batida", desc:"Chegou ao peso-meta", ok:s=>s.weights.length>0 && s.cur<=s.goal},
+  {id:"ouro", em:"🎖️", nome:"Elo Ouro", desc:"Chegou ao Ouro IV", ok:s=>s.level>=13},
+  {id:"diamante", em:"💎", nome:"Elo Diamante", desc:"Chegou ao Diamante IV", ok:s=>s.level>=25},
+  {id:"desafiante", em:"👑", nome:"Desafiante", desc:"O topo da jornada", ok:s=>s.level>=MAX_DIV+3},
+];
+const badgeList = () => BADGES.filter(b=>!b.h || on(b.h));
+// trilhas: cada uma sobe de Ferro até Desafiante conforme o número cresce
+const TRACKS = [
+  {id:"ref", ico:"🍽️", nome:"Refeições no plano", v:s=>s.mealsOn, un:"refeições", t:[10,30,75,150,250,400,600,850,1100,1400]},
+  {id:"perf", ico:"⭐", nome:"Dias perfeitos", v:s=>s.perfect, un:"dias", t:[1,3,7,15,30,50,80,120,180,250]},
+  {id:"seq", ico:"🔥", nome:"Maior sequência", v:s=>s.best, un:"dias seguidos", t:[2,3,5,7,14,21,30,45,60,90]},
+  {id:"kg", ico:"⚖️", nome:"Quilos perdidos", v:s=>Math.round(s.lost*10)/10, un:"kg", t:[0.5,1,2,3,5,7,10,13,16,20]},
+  {id:"agua", ico:"💧", nome:"Meta de água", v:s=>s.waterDays, un:"dias", t:[1,3,7,15,30,50,80,120,180,250], h:"agua"},
+  {id:"jejum", ico:"⏳", nome:"Meta de jejum", v:s=>s.fastDays, un:"dias", t:[1,3,7,15,30,50,80,120,180,250], h:"jejum"},
+  {id:"exe", ico:"🏃", nome:"Dias de exercício", v:s=>s.active, un:"dias", t:[1,3,7,15,30,50,80,120,180,250], h:"exercicio"},
+  {id:"foto", ico:"📷", nome:"Fotos avaliadas", v:s=>s.photos, un:"fotos", t:[1,5,15,30,60,100,150,220,300,400]},
+  {id:"pesa", ico:"📏", nome:"Pesagens", v:s=>s.weighs, un:"pesagens", t:[1,2,4,8,12,20,30,40,52,75]},
+];
+const trackList = () => TRACKS.filter(t=>!t.h || on(t.h));
+const trackTier = (t, s) => t.t.filter(x=>t.v(s)>=x).length;          // 0 = sem elo, 1 = Ferro … 10 = Desafiante
+function crest(tier){
+  const c = tier ? TIER[tier-1] : "#3A3A3A";
+  return `<svg viewBox="0 0 64 70" aria-hidden="true"><path d="M32 2 L60 16 L60 46 L32 68 L4 46 L4 16 Z" fill="${tier?c:"#0B0F14"}" fill-opacity="${tier?.35:1}" stroke="${tier?"#C8AA6E":"#463714"}" stroke-width="2.5"/>
+    <path d="M32 12 L52 22 L52 42 L32 57 L12 42 L12 22 Z" fill="${tier?c:"#1E2328"}" stroke="${tier?"#F0E6D2":"#463714"}" stroke-opacity=".5"/>${tier>=8?`<path d="M20 10 L25 3 L32 8 L39 3 L44 10" fill="none" stroke="#F0E6D2" stroke-width="2"/>`:""}</svg>`;
+}
+const BADGE_PRIZES = {perfeito:"Escolher o filme da noite", seq7:"Ingresso de cinema", seq30:"Dia de passeio", kg1:"Meias novas de corrida", kg3:"Camiseta de treino",
+  kg5:"Calça nova no tamanho novo", kg10:"Roupa nova completa", meta:"Viagem de comemoração", ouro:"Skin nova no LoL", diamante:"Skin lendária no LoL", desafiante:"Prêmio dos sonhos"};
+const badgePrize = id => (S.profile.badgePrizes && id in S.profile.badgePrizes) ? S.profile.badgePrizes[id] : (BADGE_PRIZES[id]||"");
+const badgeClaimed = id => !!S.profile.badgeClaimed?.[id];
+
+// ---------- feedback ----------
+function toast(msg, gold){ const box=document.getElementById("toasts"); box.querySelectorAll(".toast:not(.gold)").forEach(x=>{ if(!gold) x.remove(); }); while(box.children.length>2) box.firstChild.remove(); const t=document.createElement("div"); t.className="toast"+(gold?" gold":""); t.textContent=msg; document.getElementById("toasts").append(t); setTimeout(()=>t.remove(), 2200); }
+function modal(em, title, text){
+  const m = document.getElementById("modal");
+  m.innerHTML = `<div class="modal"><div class="card"><div class="big">${em}</div><h2></h2><p></p><button class="btn block" id="mclose">Continuar</button></div></div>`;
+  m.querySelector("h2").textContent = title; m.querySelector("p").textContent = text;
+  m.querySelector("#mclose").onclick = () => m.innerHTML = "";
+}
+function act(fn){
+  const before = stats(), got = new Set(badgeList().filter(b=>b.ok(before)).map(b=>b.id));
+  const freeBefore = treatState().avail;
+  const readyBefore = new Set((S.profile.rewards||[]).filter(r=>before.total>=r.points).map(r=>r.id));
+  fn();
+  const after = stats(), diff = after.total-before.total;
+  syncRank();
+  if (diff>0) toast(`+${diff} pontos`); else if (diff<0) toast(`${diff} pontos`);
+  for (const t of trackList()){ const a=trackTier(t,before), b=trackTier(t,after); if (b>a) toast(`${t.nome}: elo ${LEVEL_NAMES[b-1]} ${t.ico}`, true); }
+  let prizeBadge = null;
+  for (const b of badgeList()) if (!got.has(b.id) && b.ok(after)){ toast(`Conquista: ${b.nome} ${b.em}`, true); if (badgePrize(b.id)) prizeBadge = b; }
+  const newReward = (S.profile.rewards||[]).find(r=>!readyBefore.has(r.id) && after.total>=r.points && !r.claimed);
+  const freeAfter = treatState().avail;
+  if (prizeBadge) modal(prizeBadge.em,`Conquista: ${prizeBadge.nome}`,`Você ganhou: ${badgePrize(prizeBadge.id)}. Resgate na aba Prêmios.`);
+  else if (freeAfter>freeBefore){ const t=treat(); modal(t.em,`${t.title} liberada!`,`Você cumpriu a missão ${t.period==="mes"?"do mês":"da semana"}. Tem direito a 1 refeição livre: marque "${t.em} Livre" na refeição em que for usar.`); }
+  else if (newReward) modal("🎁","Recompensa liberada!",`Você juntou ${newReward.points.toLocaleString("pt-BR")} pontos e ganhou: ${newReward.title}. Resgate na aba Prêmios.`);
+  else if (after.level>before.level) modal(emblem(after.level), tierIdx(after.level)>tierIdx(before.level)?`Promovido: ${levelName(after.level)}`:`Subiu para ${levelName(after.level)}`,`Você chegou ao nível ${after.level} de 31. Faltam ${(levelAt(after.level+1)-after.total).toLocaleString("pt-BR")} pontos para o próximo.`);
+  render();
+}
+const dayData = d => (S.days[d] ||= {});
+
+// ---------- telas ----------
+const $ = (h) => { const t=document.createElement("template"); t.innerHTML=h.trim(); return t.content; };
+const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function render(){
+  const app = document.getElementById("app");
+  const tabs = document.getElementById("tabs");
+  if (S.needLogin){ tabs.hidden = true; app.replaceChildren(loginView()); return; }
+  if (!S.profile){ tabs.hidden = true; app.replaceChildren(setupView()); return; }
+  tabs.hidden = false;
+  tabs.querySelectorAll("button").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===S.tab));
+  const s = stats();
+  const view = {hoje:todayView, progresso:progressView, premios:rewardsView, ranking:rankingView, ajustes:()=>setupView(true)}[S.tab](s);
+  const frag = document.createDocumentFragment();
+  frag.append(hud(s), view);
+  frag.append($(`<p class="sync">${S.cloud ? `Salvo na sua conta Google${fbUser?.email?` (${esc(fbUser.email)})`:""}.` : (S.ready ? "Salvo só neste aparelho. Entre com o Google em Ajustes para salvar na nuvem." : "Conectando…")}</p>`));
+  app.replaceChildren(frag);
+}
+
+function hud(s){
+  const lo = levelAt(s.level), hi = levelAt(s.level+1), pct = Math.max(0, Math.round((s.total-lo)/(hi-lo)*100));
+  return $(`<header class="hud" style="--tier:${tierColor(s.level)};--tier-glow:${tierColor(s.level)}55">
+    <div class="hud-row">
+      <div class="lvl" role="img" aria-label="Nível ${s.level}">${emblem(s.level)}</div>
+      <div class="who"><span class="eyebrow">Nível ${s.level}</span><h1>${levelName(s.level)}</h1><div class="sub num">${s.total.toLocaleString("pt-BR")} pontos no total</div></div>
+      <div class="streak num" title="Dias seguidos com 3 ou mais refeições no plano">🔥${s.streak}<small>SEQUÊNCIA</small></div>
+    </div>
+    <div><div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="bar-meta num"><span>${(s.total-lo).toLocaleString("pt-BR")} / ${(hi-lo).toLocaleString("pt-BR")}</span><span>faltam ${(hi-s.total).toLocaleString("pt-BR")} para o nível ${s.level+1}</span></div></div>
+  </header>`);
+}
+
+function treatCard(){
+  const t = treat(), ts = treatState(), mes = t.period==="mes";
+  const left = Math.max(0, ts.need-ts.on), pct = Math.min(100, Math.round(ts.on/ts.need*100));
+  const endTxt = mes ? "até o fim do mês" : "até domingo";
+  const status = ts.avail>0 ? `Liberada! Você tem ${ts.avail} refeição livre${ts.avail>1?"s":""} para usar.`
+    : ts.done ? `Missão cumprida e refeição livre já usada.` : `Faltam ${left} refeições no plano ${endTxt}.`;
+  let pips = "";
+  if (!mes){ const names=["S","T","Q","Q","S","S","D"]; for (let i=0;i<7;i++){ const d=addDays(ts.per.start,i); const n=keptCount(S.days[d]);
+    pips += `<div class="p${n} ${d===today()?"now":""}"><i></i>${names[i]}</div>`; } }
+  return `<section class="card treat ${ts.avail>0?"ready":""}"><div class="card-head"><h2>Missão ${mes?"do mês":"da semana"}</h2><span class="eyebrow num">${ts.on}/${ts.need}</span></div>
+    <div class="head"><span class="em">${t.em}</span><div class="tx"><b>${esc(t.title)}</b><span>${status}</span></div></div>
+    <div class="bar"><i style="width:${pct}%"></i></div>${pips?`<div class="pips">${pips}</div>`:""}
+    <p class="note" style="margin:10px 0 0">Meta: ${t.pct}% das refeições ${mes?"do mês":"da semana"} no plano. A refeição livre vale até o fim ${mes?"do mês":"da semana"} seguinte e não quebra sua sequência.</p></section>`;
+}
+function todayView(s){
+  const d = S.day, v = S.days[d]||{}, w = WEEKS[weekOf(d)], p = S.profile;
+  const pts = dayPoints(d);
+  const nOn = onPlanCount(v);
+  const isToday = d===today();
+  const TS = treatState();
+  const frag = $(`<div class="stack">
+    <div class="daynav">
+      <button id="prev" aria-label="Dia anterior" ${d<=addDays(today(),-6)?"disabled":""}>‹</button>
+      <div class="d"><strong>${isToday?"Hoje":d===addDays(today(),-1)?"Ontem":fmtShort(d)}</strong><span>${fmtDay(d)}</span></div>
+      <button id="next" aria-label="Próximo dia" ${isToday?"disabled":""}>›</button>
+    </div>
+    <div class="today-score num">
+      <div><b>${pts}</b><span>pontos do dia</span></div>
+      <div><b>${nOn}/4</b><span>refeições no plano</span></div>
+    </div>
+    ${treatCard()}
+    <section class="card">
+      <div class="card-head"><h2>Refeições</h2><span class="eyebrow">${w.nome}</span></div>
+      <p class="how">No plano +20 · Fugi −20 · Pulei 0 · Foto avaliada até +15 · Dia perfeito +30</p>
+      <div id="meals"></div>
+      <div class="bonus ${nOn===4?"":"locked"}"><span>${nOn===4?"Dia perfeito!":"Dia perfeito: as 4 no plano"}</span><span>+${P.perfect}</span></div>
+    </section>
+    ${on("agua")?`<section class="card"><div class="card-head"><h2>Água</h2><span class="pts-pill">+1 a cada 100 ml · +${P.waterGoal} na meta</span></div>
+      <div class="wgauge num"><span class="big">${L(waterMl(v))} L</span><span class="of">de ${L(goalMl())} L${waterMl(v)>=goalMl()?" · meta batida 💧":` · faltam ${L(goalMl()-waterMl(v))} L`}</span></div>
+      <div class="wbar"><i style="width:${Math.min(100,waterMl(v)/goalMl()*100)}%"></i></div>
+      <div class="wbtns"><button class="minus" data-ml="-250" aria-label="Tirar 250 ml">−250 ml</button><button data-ml="250">+250 ml</button><button data-ml="500">+500 ml</button><button data-ml="1000">+1 L</button></div></section>`:""}
+    ${on("jejum")?fastCard(d,v,p):""}
+    <section class="card" id="habits-card"><div class="card-head"><h2>Hábitos</h2><span class="pts-pill">toque para marcar</span></div><div id="habits"></div></section>
+  </div>`);
+  const meals = frag.getElementById("meals");
+  for (const m of MEALS){
+    const st = v.meals?.[m.id];
+    const row = $(`<div class="meal"><time>${m.hora}</time><div class="content"><h3>${m.nome}</h3><p>${esc(menuText(m,w))}</p>
+      <div class="seg"><button data-m="${m.id}" data-v="on" class="${st==="on"?"on-good":""}" aria-pressed="${st==="on"}">✓ No plano · +${P.mealOn}</button>
+      <button data-m="${m.id}" data-v="off" class="${st==="off"?"on-off":""}" aria-pressed="${st==="off"}">Fugi · −${-P.mealOff}</button>
+      <button data-m="${m.id}" data-v="skip" class="${st==="skip"?"on-skip":""}" aria-pressed="${st==="skip"}">Pulei · 0</button>
+      ${st==="free"||TS.avail>0?`<button data-m="${m.id}" data-v="free" class="${st==="free"?"on-free":""}" aria-pressed="${st==="free"}">${treat().em} Livre</button>`:""}
+      ${S.photoOk?`<button class="photo-btn" data-photo="${m.id}" ${S.busy[d+m.id]?"disabled":""}>${S.busy[d+m.id]?"Analisando a foto…":v.photos?.[m.id]?"📷 Nova foto":"📷 Foto · até +15"}</button>`:""}</div>
+      <div data-review></div></div></div>`);
+    const ph = v.photos?.[m.id];
+    if (ph){ const r = $(`<div class="review"><img alt="Foto do ${m.nome.toLowerCase()}"><div><div class="nota num">${ph.nota}/10<small>+${photoPts(ph)} pts · porção ${esc(ph.porcao||"?")}</small></div><p></p><button class="x" data-unphoto="${m.id}">Remover avaliação</button></div></div>`);
+      r.querySelector("img").src = ph.thumb||""; r.querySelector("p").textContent = ph.comentario||""; row.querySelector("[data-review]").append(r); }
+    meals.append(row);
+  }
+  meals.querySelectorAll("[data-photo]").forEach(b=>b.onclick=()=>pickPhoto(d, b.dataset.photo, w));
+  meals.querySelectorAll("[data-unphoto]").forEach(b=>b.onclick=()=>act(()=>{ const dd=dayData(d); delete dd.photos[b.dataset.unphoto]; saveDay(d); }));
+  meals.querySelectorAll("button[data-v]").forEach(b=>b.onclick=()=>act(()=>{
+    const dd = dayData(d); dd.meals ||= {}; dd.meals[b.dataset.m] = dd.meals[b.dataset.m]===b.dataset.v ? null : b.dataset.v; saveDay(d);
+  }));
+  if (on("agua")) frag.querySelectorAll("[data-ml]").forEach(b=>b.onclick=()=>act(()=>{ const dd=dayData(d); dd.waterMl=Math.max(0, waterMl(dd)+(+b.dataset.ml)); delete dd.water; saveDay(d,600); }));
+  if (on("jejum")) wireFast(frag, d);
+  const hb = frag.getElementById("habits");
+  const checks = HABITS.filter(h=>h.check && on(h.id));
+  if (!checks.length) frag.getElementById("habits-card").remove();
+  for (const h of checks){
+    const done = !!v.checks?.[h.id];
+    const b = $(`<button class="habit ${done?"done":""}" aria-pressed="${done}"><span class="ico">${h.ico}</span><span class="tx"><b>${h.nome}</b><span>${h.desc} · +${h.pts}</span></span><span class="chk">✓</span></button>`).firstElementChild;
+    b.onclick=()=>act(()=>{ const dd=dayData(d); dd.checks ||= {}; dd.checks[h.id]=!dd.checks[h.id]; saveDay(d); });
+    hb.append(b);
+  }
+  frag.getElementById("prev").onclick=()=>{ S.day=addDays(d,-1); render(); };
+  frag.getElementById("next").onclick=()=>{ S.day=addDays(d,1); render(); };
+  return frag;
+}
+
+function fastCard(d, v, p){
+  const running = p.fastStart && d===today();
+  const hrs = running ? (Date.now()-p.fastStart)/36e5 : (v.fast||0);
+  const pct = Math.min(1, hrs/p.fastGoal), C = 2*Math.PI*40;
+  const h = Math.floor(hrs), mm = Math.floor((hrs-h)*60);
+  return `<section class="card"><div class="card-head"><h2>Jejum</h2><span class="pts-pill">meta ${p.fastGoal} h · +${P.fastGoal}</span></div>
+    <div class="fast">
+      <svg class="ring" viewBox="0 0 96 96" role="img" aria-label="${h} horas de jejum"><circle class="track" cx="48" cy="48" r="40"/><circle class="prog" id="fring" cx="48" cy="48" r="40" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" transform="rotate(-90 48 48)"/>
+      <text x="48" y="50" text-anchor="middle" class="num" id="ftime">${h}h${String(mm).padStart(2,"0")}</text><text x="48" y="64" text-anchor="middle" class="t2">${running?"EM ANDAMENTO":"REGISTRADO"}</text></svg>
+      <div class="ctl">
+        ${d===today()?`<button class="btn ${running?"":"ghost"}" id="fbtn">${running?"Encerrar jejum":"Começar jejum agora"}</button>`:""}
+        ${running?`<span class="note">Começou ${new Date(p.fastStart).toLocaleString("pt-BR",{weekday:"short",hour:"2-digit",minute:"2-digit"})}</span>`:
+        `<div class="stepper"><button id="fminus" aria-label="Menos uma hora">−</button><output class="num">${v.fast||0} h</output><button id="fplus" aria-label="Mais uma hora">+</button></div><span class="note">Ou ajuste as horas na mão.</span>`}
+      </div></div></section>`;
+}
+function wireFast(frag, d){
+  const p = S.profile;
+  const btn = frag.getElementById("fbtn");
+  if (btn) btn.onclick = () => act(()=>{
+    if (p.fastStart){ const h = Math.round((Date.now()-p.fastStart)/36e5*2)/2; dayData(d).fast = h; p.fastStart = null; saveDay(d); }
+    else p.fastStart = Date.now();
+    saveProfile();
+  });
+  const set = n => act(()=>{ dayData(d).fast = Math.max(0, Math.min(24,(dayData(d).fast||0)+n)); saveDay(d,500); });
+  frag.getElementById("fminus")?.addEventListener("click",()=>set(-1));
+  frag.getElementById("fplus")?.addEventListener("click",()=>set(1));
+}
+setInterval(()=>{ if (S.profile?.fastStart && S.tab==="hoje" && S.day===today()){ const el=document.getElementById("ftime"); if(!el) return;
+  const hrs=(Date.now()-S.profile.fastStart)/36e5, h=Math.floor(hrs), m=Math.floor((hrs-h)*60); el.textContent=`${h}h${String(m).padStart(2,"0")}`;
+  const C=2*Math.PI*40; document.getElementById("fring").setAttribute("stroke-dashoffset", C*(1-Math.min(1,hrs/S.profile.fastGoal))); }}, 30000);
+
+function progressView(s){
+  const range = s.start - s.goal, pct = range>0 ? Math.min(100, Math.round(s.lost/range*100)) : 0;
+  const frag = $(`<div class="stack">
+    <section class="card"><div class="card-head"><h2>Peso</h2><span class="eyebrow">meta ${kg(s.goal)} kg</span></div>
+      <div class="bigstats num"><div><b>${kg(s.cur)}</b><span>kg agora</span></div><div><b>${kg(s.lost)}</b><span>kg perdidos</span></div><div><b>${kg(Math.max(0,s.cur-s.goal))}</b><span>kg até a meta</span></div></div>
+      <div style="margin-top:12px"><div class="bar"><i style="width:${pct}%;background:var(--good)"></i></div><div class="bar-meta num"><span>${kg(s.start)} kg no início</span><span>${pct}% do caminho</span></div></div>
+      ${chart(s)}
+      <form class="weigh" id="wform"><input type="number" id="wval" inputmode="decimal" step="0.1" min="30" max="300" placeholder="Peso de hoje (kg)" aria-label="Peso de hoje em kg" value="${S.days[today()]?.weight||""}"><button class="btn">Registrar · +${P.weigh}</button></form>
+      <p class="note">Dica: pese uma vez por semana, no mesmo dia, de manhã e em jejum.</p>
+      <div class="history num" id="hist"></div>
+    </section>
+    <section class="card"><div class="card-head"><h2>Seus números</h2></div>
+      <div class="bigstats num"><div><b>${s.mealsOn}</b><span>refeições no plano</span></div><div><b>${s.perfect}</b><span>dias perfeitos</span></div><div><b>${s.best}</b><span>maior sequência</span></div></div>
+    </section>
+    <section class="card"><div class="card-head"><h2>Níveis</h2></div><div class="levels num" id="levels"></div></section>
+  </div>`);
+  frag.getElementById("wform").onsubmit = e => { e.preventDefault(); const val = parseFloat(String(document.getElementById("wval").value).replace(",","."));
+    if (!(val>30 && val<300)) return toast("Digite um peso entre 30 e 300 kg");
+    act(()=>{ dayData(today()).weight = Math.round(val*10)/10; saveDay(today()); }); };
+  const hist = frag.getElementById("hist");
+  [...s.weights].reverse().slice(0,8).forEach((x,i,a)=>{ const prev=a[i+1]; const dif = prev ? x.w-prev.w : x.w-s.start;
+    hist.append($(`<div><span>${fmtShort(x.d)}</span><b>${kg(x.w)} kg</b><span>${dif<=0?"▼":"▲"} ${kg(Math.abs(dif))}</span></div>`)); });
+  const lv = frag.getElementById("levels");
+  for (let n=Math.max(1,s.level-2); n<=s.level+3; n++) lv.append($(`<div class="${n===s.level?"cur":""}"><span><i style="background:${tierColor(n)}"></i>${n}. ${levelName(n)}</span><span>${levelAt(n).toLocaleString("pt-BR")} pts</span></div>`));
+  return frag;
+}
+function chart(s){
+  const pts = [{d:"início",w:s.start}, ...s.weights.map(x=>({d:fmtShort(x.d),w:x.w}))];
+  if (pts.length<2) return `<p class="note" style="margin-top:12px">O gráfico aparece depois da primeira pesagem.</p>`;
+  const W=320,H=150,L=34,R=12,T=12,B=22;
+  const ws = pts.map(p=>p.w).concat(s.goal);
+  let lo=Math.floor(Math.min(...ws)-1), hi=Math.ceil(Math.max(...ws)+1);
+  const x=i=>L+(W-L-R)*(i/(pts.length-1)), y=w=>T+(H-T-B)*(1-(w-lo)/(hi-lo));
+  const step = Math.max(1, Math.ceil((hi-lo)/4));
+  let grid=""; for (let v=lo; v<=hi; v+=step) grid+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L-6}" y="${y(v)+3}" text-anchor="end">${v}</text>`;
+  const line = pts.map((p,i)=>`${x(i)},${y(p.w)}`).join(" ");
+  const area = `${x(0)},${H-B} ${line} ${x(pts.length-1)},${H-B}`;
+  const last = pts.length-1;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gráfico de peso">${grid}
+    <line class="goal" x1="${L}" x2="${W-R}" y1="${y(s.goal)}" y2="${y(s.goal)}"/><text x="${W-R}" y="${y(s.goal)-4}" text-anchor="end">meta</text>
+    <polygon class="area" points="${area}" opacity=".6"/><polyline class="line" points="${line}"/>
+    ${pts.map((p,i)=>i===last?"":`<circle class="dot" cx="${x(i)}" cy="${y(p.w)}" r="3"/>`).join("")}
+    <circle class="last" cx="${x(last)}" cy="${y(pts[last].w)}" r="5"/>
+    <text x="${x(0)}" y="${H-6}">${pts[0].d}</text><text x="${x(last)}" y="${H-6}" text-anchor="end">${pts[last].d}</text></svg>`;
+}
+
+const REWARD_LADDER = [
+  ["Camiseta nova",1500],["Cinema com pipoca pequena",4000],["Garrafa térmica de treino",7000],["Tênis de corrida",10000],
+  ["Fone de ouvido esportivo",15000],["Look completo novo",22000],["Massagem ou dia de spa",30000],["Relógio esportivo",45000],["Viagem de fim de semana",66000]];
+function rankingView(s){
+  const rk = S.profile.ranking || {};
+  const mine = weekPoints();
+  const rows = R_.rows.map(r => ({...r, wk: r.week===mine.week ? (r.weekPts||0) : 0}))
+    .sort((a,b)=> R_.mode==="semana" ? (b.wk-a.wk || b.total-a.total) : (b.total-a.total));
+  const frag = $(`<div class="stack">
+    <section class="card"><div class="card-head"><h2>Ranking</h2><div class="choice" id="rmode" style="gap:6px"><button type="button" data-m="semana" aria-pressed="${R_.mode==="semana"}" style="padding:6px 10px">Semana</button><button type="button" data-m="geral" aria-pressed="${R_.mode==="geral"}" style="padding:6px 10px">Geral</button></div></div>
+      <div class="lb" id="lb"></div></section>
+    <section class="card"><div class="card-head"><h2>Sua participação</h2></div>
+      <button class="toggle" role="switch" aria-checked="${!!rk.on}" id="ron"><span><b>Aparecer no ranking</b><br><span class="note">Mostra nível, elo, pontos e sequência. Seus registros de refeições ficam privados.</span></span><span class="sw"></span></button>
+      <button class="toggle" role="switch" aria-checked="${!!rk.kg}" id="rkg" ${rk.on?"":"disabled"}><span><b>Mostrar quilos perdidos</b><br><span class="note">Opcional. O peso em si nunca aparece. Seu nome do Google aparece para a liga.</span></span><span class="sw"></span></button>
+    </section>
+    <section class="card stack"><div class="card-head" style="margin:0"><h2>Sua liga</h2>${S.profile.league?`<span class="eyebrow">${esc(S.profile.league)}</span>`:""}</div>
+      <p class="note" style="margin:0">A liga é o grupo que aparece no seu ranking. Só quem tem o código vê.</p>
+      <form id="lform" style="display:flex;gap:8px"><input type="text" id="lcode" maxlength="24" placeholder="Código da liga" aria-label="Código da liga" value="${esc(S.profile.league||"")}"><button class="btn" style="padding:8px 14px">Entrar</button></form>
+      <button class="btn ghost block" type="button" id="lnew">Criar liga nova</button>
+      ${S.profile.league?`<button class="btn block" type="button" id="linvite">Copiar convite para amigos</button>`:""}
+      <p class="note" style="margin:0">O amigo abre o convite, instala o app, entra com o Google e liga "Aparecer no ranking".</p></section>
+  </div>`);
+  const lb = frag.getElementById("lb");
+  if (!fbUser) lb.append($(`<p class="note">Entre com a conta Google (em Ajustes) para usar o ranking.</p>`));
+  else if (!S.profile.league) lb.append($(`<p class="note">Crie ou entre numa liga abaixo para ver o ranking.</p>`));
+  else if (!rows.length) lb.append($(`<p class="note">Ninguém no ranking ainda. Ligue "Aparecer no ranking" abaixo e chame os amigos.</p>`));
+  rows.forEach((r,i)=>{ const me = r.id===myId; const lvl = r.level||1;
+    const el = $(`<div class="lb-row ${me?"me":""}"><span class="pos num">${i+1}</span><span class="em">${emblem(lvl)}</span>
+      <div class="nm"><b></b><span>${levelName(lvl)} · 🔥${r.streak||0}${r.lost!=null?` · −${kg(r.lost)} kg`:""}</span></div>
+      <div class="sc num">${(R_.mode==="semana"?r.wk:r.total||0).toLocaleString("pt-BR")}<small>${R_.mode==="semana"?"PTS NA SEMANA":"PTS NO TOTAL"}</small></div></div>`);
+    el.querySelector("b").textContent = me ? (R_.names[r.id]||"Você")+" (você)" : (R_.names[r.id]||"Amigo");
+    lb.append(el); });
+  const setLeague = code => { code = code.trim().toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,24); if (!code) return toast("Digite um código");
+    if (rankCol && myId && S.profile.ranking?.on) rankCol.doc(myId).delete().catch(()=>{});
+    S.profile.league = code; saveProfile(); lastRank=""; watchLeague(); syncRank(); toast("Liga "+code); render(); };
+  frag.getElementById("lform").onsubmit = e => { e.preventDefault(); setLeague(document.getElementById("lcode").value); };
+  frag.getElementById("lnew").onclick = () => setLeague("LIGA-"+Math.random().toString(36).slice(2,7).toUpperCase());
+  frag.getElementById("linvite")?.addEventListener("click", async () => {
+    const link = location.origin+location.pathname+"?liga="+encodeURIComponent(S.profile.league);
+    const text = `Bora competir no Jornada Leve! Instala o app e entra na minha liga: ${link}`;
+    try { if (navigator.share) await navigator.share({title:"Jornada Leve", text}); else { await navigator.clipboard.writeText(text); toast("Convite copiado"); } } catch {} });
+  frag.querySelectorAll("#rmode button").forEach(b=>b.onclick=()=>{ R_.mode=b.dataset.m; render(); });
+  frag.getElementById("ron").onclick = async () => { const now = !rk.on; S.profile.ranking = {...rk, on:now}; saveProfile();
+    if (now){ lastRank=""; syncRank(); toast("Você entrou no ranking"); }
+    else if (rankCol && myId){ try { await rankCol.doc(myId).delete(); lastRank=""; } catch {} toast("Você saiu do ranking"); }
+    render(); };
+  frag.getElementById("rkg").onclick = () => { if (!rk.on) return; S.profile.ranking = {...rk, kg:!rk.kg}; saveProfile(); lastRank=""; syncRank(); render(); };
+  return frag;
+}
+function rewardsView(s){
+  const rw = [...(S.profile.rewards||[])].sort((a,b)=>a.points-b.points);
+  const frag = $(`<div class="stack">
+    <section class="card"><div class="card-head"><h2>Recompensas</h2><span class="eyebrow num">${s.total.toLocaleString("pt-BR")} pts</span></div>
+      <div id="rw"></div>
+      <form class="add-reward" id="rform"><input type="text" id="rtitle" placeholder="Nova recompensa" aria-label="Nova recompensa" maxlength="60"><input type="number" id="rpts" placeholder="pontos" aria-label="Pontos necessários" min="50" step="50"><button class="btn">+</button></form>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn ghost" id="ladder" type="button" style="flex:1">Adicionar prêmios sugeridos</button></div>
+      <p class="note">Toque em ✎ para mudar o prêmio ou os pontos. Prefira prêmios que não sejam comida; a comida que você gosta fica na refeição livre.</p>
+    </section>
+    <section class="card treat"><div class="card-head"><h2>Refeição livre</h2><button class="tag" id="tedit">✎ Editar</button></div>
+      <div class="head"><span class="em">${treat().em}</span><div class="tx"><b>${esc(treat().title)}</b><span>${treat().pct}% das refeições ${treat().period==="mes"?"do mês":"da semana"} no plano. Você tem ${treatState().avail} disponível agora.</span></div></div></section>
+    <section class="card"><div class="card-head"><h2>Trilhas de elo</h2><span class="eyebrow">Ferro → Desafiante</span></div>
+      <p class="note" style="margin:-4px 0 12px">Cada hábito tem seu próprio elo e vai subindo conforme você repete.</p><div id="tracks"></div></section>
+    <section class="card"><div class="card-head"><h2>Conquistas e prêmios</h2><span class="eyebrow num">${badgeList().filter(b=>b.ok(s)).length} de ${badgeList().length}</span></div><p class="note" style="margin:-4px 0 12px">Toque numa conquista para ver ou trocar o prêmio dela.</p><div class="badges" id="bd"></div></section>
+  </div>`);
+  const box = frag.getElementById("rw");
+  if (!rw.length) box.append($(`<p class="note">Nenhuma recompensa ainda. Crie a primeira abaixo.</p>`));
+  for (const r of rw){
+    if (S.editReward===r.id){
+      const ed = $(`<form class="reward-edit"><input type="text" maxlength="60" aria-label="Prêmio" data-t><input type="number" min="50" step="50" aria-label="Pontos" data-p>
+        <div class="row">${r.claimed?`<button type="button" class="tag" data-unclaim>Marcar como não resgatado</button>`:""}<button type="button" class="tag" data-cancel>Cancelar</button><button class="tag ready">Salvar</button></div></form>`).firstElementChild;
+      ed.querySelector("[data-t]").value = r.title; ed.querySelector("[data-p]").value = r.points;
+      ed.onsubmit = e => { e.preventDefault(); const t = ed.querySelector("[data-t]").value.trim(), n = parseInt(ed.querySelector("[data-p]").value,10);
+        if (!t || !(n>0)) return toast("Escreva o prêmio e quantos pontos ele vale");
+        r.title = t; r.points = n; S.editReward = null; saveProfile(); toast("Prêmio atualizado"); render(); };
+      ed.querySelector("[data-cancel]").onclick = () => { S.editReward = null; render(); };
+      ed.querySelector("[data-unclaim]")?.addEventListener("click", () => { r.claimed = false; S.editReward = null; saveProfile(); render(); });
+      box.append(ed); continue;
+    }
+    const ready = s.total>=r.points, pct = Math.min(100, Math.round(s.total/r.points*100));
+    const el = $(`<div class="reward ${r.claimed?"claimed":ready?"ready":""}"><div><b></b><div class="need num">${r.points.toLocaleString("pt-BR")} pontos${ready||r.claimed?"":` · faltam ${(r.points-s.total).toLocaleString("pt-BR")}`}</div></div>
+      <span style="display:flex;gap:6px;align-items:center">${r.claimed?`<span class="tag claimed">Resgatado</span>`:ready?`<button class="tag ready" data-claim>Resgatar</button>`:`<span class="tag num">${pct}%</span>`}<button class="tag" data-edit aria-label="Editar recompensa">✎</button><button class="tag" data-del aria-label="Apagar recompensa">✕</button></span>
+      <div class="bar"><i style="width:${pct}%"></i></div></div>`);
+    el.querySelector("b").textContent = r.title;
+    el.querySelector("[data-claim]")?.addEventListener("click",()=>{ r.claimed=true; saveProfile(); modal("🎉","Aproveite!",`Você mereceu: ${r.title}.`); render(); });
+    el.querySelector("[data-edit]").onclick=()=>{ S.editReward=r.id; render(); };
+    el.querySelector("[data-del]").onclick=()=>{ S.profile.rewards = S.profile.rewards.filter(x=>x.id!==r.id); saveProfile(); render(); };
+    box.append(el);
+  }
+  frag.getElementById("rform").onsubmit = e => { e.preventDefault();
+    const t = document.getElementById("rtitle").value.trim(), n = parseInt(document.getElementById("rpts").value,10);
+    if (!t || !(n>0)) return toast("Escreva a recompensa e quantos pontos ela vale");
+    (S.profile.rewards ||= []).push({id:Date.now().toString(36), title:t, points:n, claimed:false}); saveProfile(); render(); };
+  frag.getElementById("ladder").onclick = () => { const have = new Set((S.profile.rewards||[]).map(r=>r.title.toLowerCase())); let n=0;
+    REWARD_LADDER.forEach(([t,pts],i)=>{ if(!have.has(t.toLowerCase())){ (S.profile.rewards ||= []).push({id:Date.now().toString(36)+i, title:t, points:pts, claimed:false}); n++; } });
+    if (n){ saveProfile(); toast(`${n} prêmios adicionados`); render(); } else toast("Todos os sugeridos já estão na lista"); };
+  frag.getElementById("tedit").onclick = () => { S.tab="ajustes"; render(); scrollTo(0,0); };
+  const tk = frag.getElementById("tracks");
+  for (const t of trackList()){ const tier = trackTier(t,s), val = t.v(s), next = t.t[tier], prev = tier ? t.t[tier-1] : 0;
+    const pct = next===undefined ? 100 : Math.max(0, Math.min(100, Math.round((val-prev)/(next-prev)*100)));
+    const nm = tier ? LEVEL_NAMES[tier-1] : "Sem elo", col = tier ? TIER[tier-1] : "var(--dim)";
+    tk.append($(`<div class="track"><div class="crest">${crest(tier)}</div><div class="tt"><div class="row1"><b>${t.ico} ${t.nome}</b><span style="color:${col}">${nm}</span></div>
+      <div class="bar"><i style="width:${pct}%;background:${tier?TIER[Math.max(0,tier-1)]:"var(--gold-deep)"};box-shadow:none"></i></div>
+      <div class="nx num">${val.toLocaleString("pt-BR")} ${t.un}${next===undefined?" · elo máximo":` · ${LEVEL_NAMES[tier]} em ${next.toLocaleString("pt-BR")}`}</div></div></div>`)); }
+  const bd = frag.getElementById("bd");
+  for (const b of badgeList()){ const got=b.ok(s), pr=badgePrize(b.id);
+    const el = $(`<button class="badge ${got?"got":""}" aria-pressed="${S.badgeSel===b.id}"><span class="em">${b.em}</span><b>${b.nome}</b><span>${b.desc}</span>${pr?`<span class="prize ${badgeClaimed(b.id)?"claimed":""}"></span>`:""}</button>`).firstElementChild;
+    if (pr) el.querySelector(".prize").textContent = "🎁 "+pr;
+    el.onclick = () => { S.badgeSel = S.badgeSel===b.id ? null : b.id; render(); };
+    bd.append(el); }
+  const sel = badgeList().find(b=>b.id===S.badgeSel);
+  if (sel){ const got = sel.ok(s), pr = badgePrize(sel.id), cl = badgeClaimed(sel.id);
+    const pn = $(`<div class="bpanel"><div class="top"><span style="font-size:26px">${sel.em}</span><div><b>${sel.nome}</b><span>${sel.desc} · ${got?(pr?(cl?"prêmio resgatado":"prêmio liberado!"):"conquistada"):"ainda bloqueada"}</span></div></div>
+      <form><input type="text" maxlength="60" placeholder="Prêmio desta conquista (opcional)" aria-label="Prêmio desta conquista"><button class="tag">Salvar</button></form>
+      ${got&&pr&&!cl?`<button class="btn" data-bclaim>Resgatar prêmio</button>`:""}${cl?`<button class="tag" data-bunclaim>Marcar como não resgatado</button>`:""}</div>`).firstElementChild;
+    pn.querySelector("input").value = pr;
+    pn.querySelector("form").onsubmit = e => { e.preventDefault(); (S.profile.badgePrizes ||= {})[sel.id] = pn.querySelector("input").value.trim(); saveProfile(); toast("Prêmio salvo"); render(); };
+    pn.querySelector("[data-bclaim]")?.addEventListener("click",()=>{ (S.profile.badgeClaimed ||= {})[sel.id]=true; saveProfile(); modal(sel.em,"Aproveite!",`Você mereceu: ${pr}.`); render(); });
+    pn.querySelector("[data-bunclaim]")?.addEventListener("click",()=>{ delete S.profile.badgeClaimed[sel.id]; saveProfile(); render(); });
+    bd.after(pn); }
+  return frag;
+}
+
+function setupView(editing){
+  const p = S.profile || {startWeight:"", goalWeight:"", habits:["refeicoes","agua","jejum","exercicio","semdoce","pesagem"], waterL:3, fastGoal:12,
+    rewards:REWARD_LADDER.map(([title,points],i)=>({id:"r"+(i+1),title,points,claimed:false}))};
+  const sel = new Set(p.habits);
+  const frag = $(`<div class="stack setup" style="padding-top:20px">
+    ${editing?`<h2>Ajustes</h2>`:`<div><span class="eyebrow">Jornada Leve</span><h2 class="hero-title">Cada refeição no plano vale pontos</h2>
+      <p class="lead">Escolha o que vai contar no seu dia. Tudo que você cumprir vira pontos, os pontos sobem seu nível e liberam as recompensas que você definir.</p></div>`}
+    <section class="card stack"><h2>Seu peso</h2>
+      <div class="two"><div class="field"><label for="sw">Peso inicial (kg)</label><input type="number" id="sw" inputmode="decimal" step="0.1" value="${p.startWeight}"></div>
+      <div class="field"><label for="gw">Meta (kg)</label><input type="number" id="gw" inputmode="decimal" step="0.1" value="${p.goalWeight}"></div></div>
+    </section>
+    <section class="card"><div class="card-head"><h2>O que vai contar</h2></div><div id="hl"></div>
+      <div class="two" style="margin-top:12px">
+        <div class="field"><label for="wg">Meta de água (litros)</label><input type="number" id="wg" inputmode="decimal" min="1" max="6" step="0.25" value="${p.waterL ?? ((p.waterGoal||8)*0.25)}"></div>
+        <div class="field"><label for="fg">Meta de jejum (horas)</label><input type="number" id="fg" min="8" max="20" value="${p.fastGoal}"></div>
+      </div><p class="note" style="margin-top:8px">Pelo seu plano, do jantar das 22h ao café das 9h são 11 horas.</p>
+      <button class="toggle" type="button" role="switch" id="smenu" aria-checked="${p.showMenu!==false}" style="margin-top:10px"><span><b>Mostrar o cardápio da nutricionista</b><br><span class="note">Desligue se você segue outro plano.</span></span><span class="sw"></span></button>
+    </section>
+    <section class="card stack"><div class="card-head" style="margin:0"><h2>Refeição livre</h2></div>
+      <p class="note" style="margin:0">Cumpra a missão e ganhe uma refeição do que você gosta, sem culpa.</p>
+      <div class="two"><div class="field"><label for="tt">Prêmio</label><input type="text" id="tt" maxlength="40" value="${esc(treat().title)}"></div>
+      <div class="field"><label for="te">Ícone</label><input type="text" id="te" maxlength="4" value="${treat().em}"></div></div>
+      <div class="field"><label>Período da missão</label><div class="choice" id="tp"><button type="button" data-p="semana" aria-pressed="${treat().period!=="mes"}">Semana</button><button type="button" data-p="mes" aria-pressed="${treat().period==="mes"}">Mês</button></div></div>
+      <div class="field"><label for="tpct">Refeições no plano exigidas (%)</label><input type="number" id="tpct" min="50" max="100" step="5" value="${treat().pct}"></div>
+      <p class="note" style="margin:0">Com 90% na semana, são 26 das 28 refeições.</p>
+    </section>
+    ${editing?"":`<section class="card"><h2>Recompensas sugeridas</h2><p class="note">Você muda, apaga ou cria outras depois, na aba Prêmios.</p>
+      <div class="history num">${p.rewards.map(r=>`<div><b>${esc(r.title)}</b><span>${r.points.toLocaleString("pt-BR")} pts</span></div>`).join("")}</div></section>`}
+    <button class="btn block" id="save" style="padding:15px">${editing?"Salvar ajustes":"Começar a jornada"}</button>
+    ${editing?`<p class="note">Mudar os hábitos recalcula os pontos dos dias anteriores.</p>
+      ${window.firebase&&window.APP_CONFIG?.firebase?.apiKey?(fbUser?`<button class="btn ghost block" type="button" id="logout">Sair da conta ${esc(fbUser.email||"")}</button>`:`<button class="btn ghost block" type="button" id="login2">Entrar com Google para salvar na nuvem</button>`):""}`:""}
+  </div>`);
+  let tperiod = treat().period, showMenu = p.showMenu!==false;
+  frag.getElementById("smenu").onclick = e => { showMenu=!showMenu; e.currentTarget.setAttribute("aria-checked", showMenu); };
+  frag.querySelectorAll("#tp button").forEach(b=>b.onclick=()=>{ tperiod=b.dataset.p; b.parentNode.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", x===b)); });
+  const hl = frag.getElementById("hl");
+  for (const h of HABITS){
+    const b = $(`<button class="habit ${sel.has(h.id)?"done":""}" type="button" aria-pressed="${sel.has(h.id)}" ${h.fixed?"disabled":""}><span class="ico">${h.ico}</span><span class="tx"><b>${h.nome}</b><span>${h.desc}${h.pts?` · +${h.pts}`:""}</span></span><span class="chk">✓</span></button>`).firstElementChild;
+    b.onclick = () => { sel.has(h.id)?sel.delete(h.id):sel.add(h.id); b.classList.toggle("done"); b.setAttribute("aria-pressed", sel.has(h.id)); };
+    hl.append(b);
+  }
+  frag.getElementById("save").onclick = () => {
+    const num = id => parseFloat(String(document.getElementById(id).value).replace(",","."));
+    const sw=num("sw"), gw=num("gw");
+    if (!(sw>30) || !(gw>30)) return toast("Preencha o peso inicial e a meta");
+    if (gw>=sw) return toast("A meta precisa ser menor que o peso inicial");
+    S.profile = {...p, startWeight:sw, goalWeight:gw, habits:[...sel], waterL:Math.min(6,Math.max(1,num("wg")||3)), fastGoal:Math.max(8,num("fg")||12), created:p.created||today(), showMenu,
+      treat:{title:document.getElementById("tt").value.trim()||"Pizza", em:document.getElementById("te").value.trim()||"🍕", period:tperiod, pct:Math.min(100,Math.max(50,num("tpct")||90))}};
+    saveProfile(); syncRank(); S.tab="hoje";
+    if (!editing) modal("🌱","Jornada começou!","Marque suas refeições, a água e o jejum ao longo do dia. Cada coisa cumprida vira pontos."); else toast("Ajustes salvos");
+    render();
+  };
+  frag.getElementById("logout")?.addEventListener("click", () => firebase.auth().signOut().then(()=>{ try{localStorage.removeItem("jl-offline")}catch{} location.reload(); }));
+  frag.getElementById("login2")?.addEventListener("click", () => { try{localStorage.removeItem("jl-offline")}catch{} S.needLogin=true; render(); });
+  return frag;
+}
+
+document.getElementById("tabs").addEventListener("click", e => { const b=e.target.closest("button[data-tab]"); if(!b) return; S.tab=b.dataset.tab; if (S.tab==="hoje") S.day=today(); render(); scrollTo(0,0); });
+render();
+connect();
+setTimeout(()=>{ if(!S.ready) finishBoot(); }, 11000);
+})();
+</script>
+</body>
+</html>

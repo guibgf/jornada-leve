@@ -1,0 +1,8 @@
+{
+  "name": "jornada-leve-foto",
+  "private": true,
+  "type": "module",
+  "scripts": { "deploy": "wrangler deploy" },
+  "dependencies": { "@anthropic-ai/sdk": "latest" },
+  "devDependencies": { "wrangler": "latest" }
+}
