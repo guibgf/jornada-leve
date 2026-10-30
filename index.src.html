@@ -290,7 +290,7 @@ button.badge[aria-pressed="true"]{border-color:var(--gold);background:var(--gold
 const WEEKS = [
   {nome:"Semana 1 · arroz e frango", cafe:"2 fatias de pão integral, 2 ovos e 1 colher de requeijão light", prato:"Arroz 100 g + frango desfiado 120 g", lanche:"7 Magic Toast + frango desfiado 80 g + requeijão light"},
   {nome:"Semana 2 · batata e carne", cafe:"Tapioca 45 g + 2 ovos + requeijão light", prato:"Batata inglesa assada 145 g + carne grelhada 89 g", lanche:"Whey 30 g + 100 ml de leite desnatado + banana"},
-  {nome:"Semana 3 · macarrão e carne moída", cafe:"2 fatias de pão integral + atum 80 g + requeijão light", prato:"Macarrão 100 g + carne moída 63 g", lanche:"7 Magic Toast + frango desfiado 80 g + requeijão light"},
+  {nome:"Semana 3 · macarrão e carne moída", cafe:"2 fatias de pão integral + atum 80 g + requeijão light", prato:"Macarrão 100 g + carne moída 63 g", lanche:"Whey 30 g + 100 ml de leite desnatado + banana"},
   {nome:"Semana 4 · mandioca e peixe", cafe:"7 Magic Toast + 2 ovos + requeijão light", prato:"Mandioca 107 g + filé de peixe 115 g", lanche:"Whey 30 g + 100 ml de leite desnatado + banana"},
 ];
 const MEALS = [
@@ -312,7 +312,7 @@ const OPTS = {
 const WEEK_PICKS = [
   {cafe:{g:[0,0]}, prato:{g:[0,0]}, lanche:{a:0}},
   {cafe:{g:[1,0]}, prato:{g:[2,3]}, lanche:{a:1}},
-  {cafe:{g:[0,2]}, prato:{g:[5,8]}, lanche:{a:0}},
+  {cafe:{g:[0,2]}, prato:{g:[5,8]}, lanche:{a:1}},
   {cafe:{g:[2,0]}, prato:{g:[3,5]}, lanche:{a:1}},
 ];
 const weekPick = (d, id) => { const w = WEEK_PICKS[weekOf(d)]; return id==="almoco"||id==="jantar" ? w.prato : w[id]; };
