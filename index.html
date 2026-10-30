@@ -77,6 +77,21 @@ h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:.0
 /* refeições */
 .meal{display:grid;grid-template-columns:48px 1fr;gap:12px;padding-block:14px;border-top:1px solid var(--line)}
 .meal:first-of-type{border-top:0;padding-top:0}
+.meal.todo{margin-inline:-8px;padding-inline:8px;box-shadow:inset 3px 0 0 var(--accent);background:linear-gradient(90deg,rgba(10,200,185,.10),transparent 70%)}
+.meal.todo:first-of-type{padding-top:10px}
+.meal.todo .seg button:not([class]){border-color:rgba(10,200,185,.6)}
+.todo-tag{display:inline-block;margin-left:8px;padding:2px 7px;font-family:var(--body,inherit);font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#01131A;background:var(--accent);vertical-align:2px;animation:blink 2.4s ease-in-out infinite}
+.done-tag{display:inline-block;margin-left:8px;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted);vertical-align:2px}
+.card.todo{border-color:rgba(10,200,185,.75);box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),0 0 18px rgba(10,200,185,.18)}
+.card.todo h2{white-space:nowrap}
+.card.todo h2::after{content:"PREENCHER";display:inline-block;margin-left:8px;padding:2px 7px;font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#01131A;background:var(--accent);vertical-align:3px;font-family:inherit}
+.habit:not(.done){border-color:rgba(10,200,185,.45)}
+.pending{display:grid;gap:10px}
+.pending .chips{display:flex;flex-wrap:wrap;gap:8px}
+.pending .chips button{border:1px solid var(--accent);background:var(--accent-soft);color:var(--on-accent);padding:8px 11px;font-weight:700;font-size:13px}
+.pending.ok{border-color:rgba(47,191,122,.6)}
+@keyframes blink{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.todo-tag{animation:none}}
 .meal time{font-family:var(--display);font-weight:700;font-size:15px;color:var(--gold);padding-top:2px}
 .meal h3{font-size:15px;text-transform:uppercase;letter-spacing:.06em}
 .meal p{margin:3px 0 10px;color:var(--muted);font-size:14.5px}
@@ -760,6 +775,7 @@ function todayView(s){
       <div><b>${nOn}/4</b><span>refeições no plano</span></div>
     </div>
     ${isToday?`<p class="phrase">${esc(phraseOf(d))}</p>`:""}
+    <section class="card pending" id="pending"></section>
     ${treatCard()}
     <section class="card">
       <div class="card-head"><h2>Refeições</h2><span class="eyebrow">${isTue(d)?"Terça coringa · sem carne vermelha":w.nome}</span></div>
@@ -767,7 +783,7 @@ function todayView(s){
       <div id="meals"></div>
       <div class="bonus ${nOn===4?"":"locked"}"><span>${nOn===4?"Dia perfeito!":"Dia perfeito: as 4 no plano"}</span><span>+${P.perfect}</span></div>
     </section>
-    ${on("agua")?`<section class="card"><div class="card-head"><h2>Água</h2><span class="pts-pill">+1 a cada 100 ml · +${P.waterGoal} na meta</span></div>
+    ${on("agua")?`<section class="card ${waterMl(v)<goalMl()?"todo":""}" id="water-card"><div class="card-head"><h2>Água</h2><span class="pts-pill">+1 a cada 100 ml · +${P.waterGoal} na meta</span></div>
       <div class="wgauge num"><span class="big">${L(waterMl(v))} L</span><span class="of">de ${L(goalMl())} L${waterMl(v)>=goalMl()?" · meta batida 💧":` · faltam ${L(goalMl()-waterMl(v))} L`}</span></div>
       <div class="wbar"><i style="width:${Math.min(100,waterMl(v)/goalMl()*100)}%"></i></div>
       <div class="wbtns"><button class="minus" data-ml="-250" aria-label="Tirar 250 ml">−250 ml</button><button data-ml="250">+250 ml</button><button data-ml="500">+500 ml</button><button data-ml="1000">+1 L</button></div></section>`:""}
@@ -777,7 +793,7 @@ function todayView(s){
   const meals = frag.getElementById("meals");
   for (const m of MEALS){
     const st = v.meals?.[m.id];
-    const row = $(`<div class="meal"><time>${m.hora}</time><div class="content"><h3>${m.nome}</h3><p>${esc(mealText(d,m))}${v.pick?.[m.id]?` <span class="pts-pill">· trocado</span>`:""}</p>
+    const row = $(`<div class="meal ${st?"":"todo"}" id="meal-${m.id}"><time>${m.hora}</time><div class="content"><h3>${m.nome}${st?`<span class="done-tag">✓ marcado</span>`:`<span class="todo-tag">MARCAR</span>`}</h3><p>${esc(mealText(d,m))}${v.pick?.[m.id]?` <span class="pts-pill">· trocado</span>`:""}</p>
       ${S.profile.showMenu===false?"":`<button class="opt-toggle" data-opt="${m.id}" aria-expanded="${S.openOpt===d+m.id}">${S.openOpt===d+m.id?"Fechar opções ▴":"Trocar opção ▾"}</button><div data-opts></div>`}
       <div class="seg"><button data-m="${m.id}" data-v="on" class="${st==="on"?"on-good":""}" aria-pressed="${st==="on"}">✓ No plano · +${P.mealOn}</button>
       <button data-m="${m.id}" data-v="off" class="${st==="off"?"on-off":""}" aria-pressed="${st==="off"}">Fugi · −${-P.mealOff}</button>
@@ -814,6 +830,17 @@ function todayView(s){
   const hb = frag.getElementById("habits");
   const checks = HABITS.filter(h=>h.check && on(h.id));
   if (!checks.length) frag.getElementById("habits-card").remove();
+  else if (checks.some(h=>!v.checks?.[h.id])) frag.getElementById("habits-card").classList.add("todo");
+  // o que falta preencher no dia
+  const pend = [];
+  for (const m of MEALS) if (!v.meals?.[m.id]) pend.push([m.nome, "meal-"+m.id]);
+  if (on("agua") && waterMl(v)<goalMl()) pend.push([`Água (${L(waterMl(v))} de ${L(goalMl())} L)`, "water-card"]);
+  if (on("jejum") && !(p.fastStart && isToday) && !((v.fast||0)>0)) pend.push(["Jejum", "fast-card"]);
+  for (const h of checks) if (!v.checks?.[h.id]) pend.push([h.nome, "habits-card"]);
+  const pc = frag.getElementById("pending");
+  if (!pend.length){ pc.classList.add("ok"); pc.innerHTML = `<div class="card-head" style="margin:0"><h2>Tudo preenchido ✓</h2></div><p class="note" style="margin:0">Dia completo. Agora é manter!</p>`; }
+  else { pc.innerHTML = `<div class="card-head" style="margin:0"><h2>Falta preencher</h2><span class="pts-pill">${pend.length} ${pend.length>1?"itens":"item"}</span></div><div class="chips"></div>`;
+    for (const [t,id] of pend){ const b=document.createElement("button"); b.type="button"; b.textContent=t; b.onclick=()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth", block:"center"}); pc.querySelector(".chips").append(b); } }
   for (const h of checks){
     const done = !!v.checks?.[h.id];
     const b = $(`<button class="habit ${done?"done":""}" aria-pressed="${done}"><span class="ico">${h.ico}</span><span class="tx"><b>${h.nome}</b><span>${h.desc} · +${h.pts}</span></span><span class="chk">✓</span></button>`).firstElementChild;
@@ -836,7 +863,7 @@ function fastCard(d, v, p){
   const hrs = running ? (Date.now()-p.fastStart)/36e5 : (v.fast||0);
   const pct = Math.min(1, hrs/p.fastGoal), C = 2*Math.PI*40;
   const h = Math.floor(hrs), mm = Math.floor((hrs-h)*60);
-  return `<section class="card"><div class="card-head"><h2>Jejum</h2><span class="pts-pill">meta ${p.fastGoal} h · +${P.fastGoal}</span></div>
+  return `<section class="card ${running||(v.fast||0)>0?"":"todo"}" id="fast-card"><div class="card-head"><h2>Jejum</h2><span class="pts-pill">meta ${p.fastGoal} h · +${P.fastGoal}</span></div>
     <div class="fast">
       <svg class="ring" viewBox="0 0 96 96" role="img" aria-label="${h} horas de jejum"><circle class="track" cx="48" cy="48" r="40"/><circle class="prog" id="fring" cx="48" cy="48" r="40" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" transform="rotate(-90 48 48)"/>
       <text x="48" y="50" text-anchor="middle" class="num" id="ftime">${h}h${String(mm).padStart(2,"0")}</text><text x="48" y="64" text-anchor="middle" class="t2">${running?"EM ANDAMENTO":"REGISTRADO"}</text></svg>
