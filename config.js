@@ -2,10 +2,9 @@
 // Esses valores não são secretos: o acesso é protegido pelas regras do Firestore (firestore.rules).
 window.APP_CONFIG = {
   firebase: {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    appId: ""
+    apiKey: "AIzaSyCJg9a5nS2F1desaPr-R6ALJyoU8N2Hsto",
+    authDomain: "jornada-leve-60502.firebaseapp.com",
+    projectId: "jornada-leve-60502"
   },
   // Endereço do serviço que avalia a foto da refeição (pasta worker/). Vazio = botão de foto escondido.
   photoApi: ""
