@@ -336,14 +336,20 @@ const WEEK_PICKS = [
   {cafe:{g:[0,2]}, prato:{g:[5,8]}, lanche:{a:1}},
   {cafe:{g:[2,0]}, prato:{g:[3,5]}, lanche:{a:1}},
 ];
-const weekPick = (d, id) => { const w = WEEK_PICKS[weekOf(d)]; return id==="almoco"||id==="jantar" ? w.prato : w[id]; };
+// Terça coringa: sem carne vermelha e sem alimentos escuros ou vermelhos (atum, molho de tomate...)
+const isTue = d => new Date(d+"T12:00:00").getDay()===2;
+const TUE_PICK = {cafe:{g:[1,0]}, almoco:{g:[0,6]}, lanche:{a:1}, jantar:{g:[0,5]}};
+const TUE_BLOCK = new Set(["Atum 80 g","Carne grelhada ou assada 89 g","Carne refogada 96 g","Carne moída refogada 63 g"]);
+const TUE_LEGUMES = "legumes claros (chuchu, abobrinha, couve-flor, palmito, pepino, repolho branco, alface), sem tomate nem beterraba";
+const tueText = t => t.replace("salada e legumes à vontade", TUE_LEGUMES).replace("Whey 30 g", "Whey de baunilha 30 g").replace("Filé de peixe 115 g", "Filé de peixe branco 115 g");
+const weekPick = (d, id) => { if (isTue(d)) return TUE_PICK[id]; const w = WEEK_PICKS[weekOf(d)]; return id==="almoco"||id==="jantar" ? w.prato : w[id]; };
 const pickOf = (d, id) => S.days[d]?.pick?.[id] || weekPick(d, id);
 function pickText(id, pk){
   const o = OPTS[id];
   if (pk.a!=null) return o.alts[pk.a];
   return o.groups.map((g,i)=>g[1][pk.g[i]]).join(" + ") + (o.extra ? ` + ${o.extra}` : "");
 }
-const mealText = (d, m) => S.profile?.showMenu===false ? "Siga o seu plano alimentar" : pickText(m.id, pickOf(d, m.id));
+const mealText = (d, m) => { if (S.profile?.showMenu===false) return "Siga o seu plano alimentar"; const t = pickText(m.id, pickOf(d, m.id)); return isTue(d) ? tueText(t) : t; };
 const menuText = (m,w) => mealText(S.day, m);
 // Pontos de cada hábito
 const P = {mealOn:20, mealOff:-20, perfect:30, photoMax:15, per100ml:1, waterGoal:15, fastGoal:30, fastHour:2, weigh:10};
@@ -434,7 +440,7 @@ function pickPhoto(d, mealId, w){
     try {
       const [big, thumb] = await Promise.all([shrink(f,1024,.82), shrink(f,160,.6)]);
       const prompt = `Você é o avaliador de um jogo de emagrecimento. A pessoa segue um plano de nutricionista e mandou a foto da refeição "${meal.nome}".
-Refeição prevista no plano para esta semana: ${S.profile.showMenu===false?"não informada; avalie se parece uma refeição equilibrada de dieta":mealText(d, meal)}.
+Refeição prevista no plano para este dia: ${S.profile.showMenu===false?"não informada; avalie se parece uma refeição equilibrada de dieta":mealText(d, meal)}.
 Regras do plano: metade do prato com salada e legumes; carboidrato e proteína nas quantidades indicadas; nada frito, doce ou refrigerante fora do plano. As gramas são do alimento pronto.
 Avalie a foto e responda SÓ com JSON: {"nota": inteiro 0 a 10 (10 = exatamente o plano, 7-9 = no plano com pequenas diferenças, 4-6 = parecido mas com porção ou item fora, 0-3 = fora do plano), "no_plano": true ou false, "porcao": "certa" | "pouca" | "muita", "vistos": [até 5 alimentos que você vê], "comentario": "uma ou duas frases em português do Brasil, tom de treinador animado e gentil, dizendo o que ficou bom e uma dica"}.
 Se a foto não for de comida, dê nota 0 e diga isso no comentário.`;
@@ -750,7 +756,7 @@ function todayView(s){
     </div>
     ${treatCard()}
     <section class="card">
-      <div class="card-head"><h2>Refeições</h2><span class="eyebrow">${w.nome}</span></div>
+      <div class="card-head"><h2>Refeições</h2><span class="eyebrow">${isTue(d)?"Terça coringa · sem carne vermelha":w.nome}</span></div>
       <p class="how">No plano +20 · Fugi −20 · Pulei 0 · Foto avaliada até +15 · Dia perfeito +30</p>
       <div id="meals"></div>
       <div class="bonus ${nOn===4?"":"locked"}"><span>${nOn===4?"Dia perfeito!":"Dia perfeito: as 4 no plano"}</span><span>+${P.perfect}</span></div>
@@ -776,14 +782,14 @@ function todayView(s){
     if (S.openOpt===d+m.id){
       const o = OPTS[m.id], pk = pickOf(d, m.id), box = document.createElement("div"); box.className="opts";
       o.groups.forEach((g,gi)=>{ const sec=$(`<div><span class="gname">${g[0]}</span><div class="chips"></div></div>`).firstElementChild;
-        g[1].forEach((it,ii)=>{ const b=document.createElement("button"); b.textContent=it; const sel=pk.g&&pk.g[gi]===ii; b.setAttribute("aria-pressed", !!sel);
+        g[1].forEach((it,ii)=>{ if (isTue(d) && TUE_BLOCK.has(it)) return; const b=document.createElement("button"); b.textContent=isTue(d)?tueText(it):it; const sel=pk.g&&pk.g[gi]===ii; b.setAttribute("aria-pressed", !!sel);
           b.onclick=()=>{ const cur=pickOf(d,m.id); const gsel = cur.g ? [...cur.g] : (weekPick(d,m.id).g ? [...weekPick(d,m.id).g] : o.groups.map(()=>0)); gsel[gi]=ii; setPick(d,m.id,{g:gsel}); };
           sec.querySelector(".chips").append(b); });
         box.append(sec); });
       if (o.alts.length){ const sec=$(`<div><span class="gname">${o.groups.length?"Ou":"Opções"}</span><div class="chips"></div></div>`).firstElementChild;
-        o.alts.forEach((it,ii)=>{ const b=document.createElement("button"); b.textContent=it; b.setAttribute("aria-pressed", pk.a===ii); b.onclick=()=>setPick(d,m.id,{a:ii}); sec.querySelector(".chips").append(b); });
+        o.alts.forEach((it,ii)=>{ const b=document.createElement("button"); b.textContent=isTue(d)?tueText(it):it; b.setAttribute("aria-pressed", pk.a===ii); b.onclick=()=>setPick(d,m.id,{a:ii}); sec.querySelector(".chips").append(b); });
         box.append(sec); }
-      if (v.pick?.[m.id]){ const r=document.createElement("button"); r.className="reset"; r.textContent="Voltar ao cardápio da semana"; r.onclick=()=>setPick(d,m.id,null); box.append(r); }
+      if (v.pick?.[m.id]){ const r=document.createElement("button"); r.className="reset"; r.textContent=isTue(d)?"Voltar ao cardápio de terça":"Voltar ao cardápio da semana"; r.onclick=()=>setPick(d,m.id,null); box.append(r); }
       row.querySelector("[data-opts]").append(box);
     }
     const ph = v.photos?.[m.id];
