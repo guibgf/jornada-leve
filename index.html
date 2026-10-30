@@ -635,8 +635,14 @@ function crest(tier){
   return `<svg viewBox="0 0 64 70" aria-hidden="true"><path d="M32 2 L60 16 L60 46 L32 68 L4 46 L4 16 Z" fill="${tier?c:"#0B0F14"}" fill-opacity="${tier?.35:1}" stroke="${tier?"#C8AA6E":"#463714"}" stroke-width="2.5"/>
     <path d="M32 12 L52 22 L52 42 L32 57 L12 42 L12 22 Z" fill="${tier?c:"#1E2328"}" stroke="${tier?"#F0E6D2":"#463714"}" stroke-opacity=".5"/>${tier>=8?`<path d="M20 10 L25 3 L32 8 L39 3 L44 10" fill="none" stroke="#F0E6D2" stroke-width="2"/>`:""}</svg>`;
 }
-const BADGE_PRIZES = {perfeito:"Escolher o filme da noite", seq7:"Ingresso de cinema", seq30:"Dia de passeio", kg1:"Meias novas de corrida", kg3:"Camiseta de treino",
-  kg5:"Calça nova no tamanho novo", kg10:"Roupa nova completa", meta:"Viagem de comemoração", ouro:"Skin nova no LoL", diamante:"Skin lendária no LoL", desafiante:"Prêmio dos sonhos"};
+const BADGE_PRIZES = {
+  primeiro:"Um quadradinho de chocolate 🍫", perfeito:"Um sorvete pequeno 🍦", seq3:"R$ 15 para gastar com besteira 💸",
+  seq7:"1 dia de folga da academia 🛋️", seq30:"Rodízio de pizza ou japonês 🍣", marmita50:"R$ 50 livres para o que quiser 💸",
+  agua:"Um refrigerante normal 🥤", jejum:"Um açaí pequeno 🍧", ativo:"2 dias de folga da academia 🛋️",
+  balanca:"Um pão de queijo com café ☕", kg1:"Um hambúrguer artesanal 🍔", kg3:"R$ 100 com besteira, sem culpa 💸",
+  kg5:"Uma semana com 3 dias de folga da academia 🛋️", kg10:"Festival de comida: pizza, sobremesa e R$ 200 livres 🎉",
+  meta:"Um fim de semana livre: comida à vontade e sem academia 🏖️", ouro:"Uma sobremesa caprichada 🍰",
+  diamante:"R$ 150 com besteira + 1 dia de folga 💸", desafiante:"Churrasco de comemoração com os amigos 🥩"};
 const badgePrize = id => (S.profile.badgePrizes && id in S.profile.badgePrizes) ? S.profile.badgePrizes[id] : (BADGE_PRIZES[id]||"");
 const badgeClaimed = id => !!S.profile.badgeClaimed?.[id];
 
